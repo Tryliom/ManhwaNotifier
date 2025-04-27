@@ -7,7 +7,6 @@ import {ScrapStatusType} from "../models/ScrapStatusType.mjs";
 
 const SupportedWebsites = [
     "https://asuracomic.net/series/",
-    "https://utoon.net/manga/",
     "https://reaperscans.com/series/",
     "https://zinmanga.net/manga/",
     "https://manhuaplus.com/manga/",
