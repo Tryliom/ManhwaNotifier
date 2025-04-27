@@ -1,0 +1,8 @@
+node_modules/
+.idea/
+*.iml
+assets/data/*
+assets/backup/*
+assets/purge/*
+.env
+package-lock.json
