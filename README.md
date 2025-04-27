@@ -30,14 +30,19 @@ They can be tested with /check command.
 ```bash
 git clone https://github.com/Tryliom/ManhwaNotifier.git
 ```
-
 2. Install dependencies
 ```bash
 npm install
 ```
-
 3. You need to duplicate the `.env.example` file and rename it to `.env`.
    Then, fill in the required fields.
+4. You need to create the folder `./assets/` with the following structure:
+```
+assets
+├── backup
+├── data
+├── purge
+```
 
 ### Start the bot
 ```bash
@@ -46,3 +51,5 @@ npm start
 
 Warning: the bot uses puppeteer to scrape the websites,
 so it will take a lot of memory and can create a lot of logs on some machines.
+
+You will need to run the command `/panel` to set up the bot server for the logs and other things.
