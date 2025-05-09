@@ -8,7 +8,6 @@ from a supported website and the bot will notify you when a new chapter is relea
 
 ## Supported Websites
 - [AsuraComic](https://asuracomic.net/)
-- [ReaperScans](https://reaperscans.com/)
 - [ZinManga](https://zinmanga.net/)
 - [ManhuaPlus](https://manhuaplus.com/)
 - [ManhwaBuddy](https://manhwabuddy.com/)
