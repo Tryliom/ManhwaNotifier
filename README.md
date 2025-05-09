@@ -15,6 +15,7 @@ from a supported website and the bot will notify you when a new chapter is relea
 - [KingOfShojo](https://kingofshojo.com/)
 - [ToonClash](https://toonclash.com/)
 - [MangaBuddy](https://mangabuddy.com/)
+- [RoliaScan](https://roliascan.com/)
 
 And a lot of websites are supported by default because they use the same WordPress template. 
 They can be tested with /check command.

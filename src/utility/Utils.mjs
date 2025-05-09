@@ -14,6 +14,7 @@ const SupportedWebsites = [
     "https://kingofshojo.com/manga/",
     "https://toonclash.com/manga/",
     "https://mangabuddy.com/",
+    "https://roliascan.com/manga/"
 ];
 
 const titleFormat = /[\[\]',.’`?!()\n&:\/\\]/g;
@@ -743,6 +744,10 @@ export class Utils
                     else if (url.includes("manganato"))
                     {
                         scrapInfo.Name = document.getElementsByClassName("story-info-right")[0].firstElementChild.textContent;
+                    }
+                    else if (url.includes("roliascan"))
+                    {
+                        scrapInfo.Name = document.getElementsByClassName("post-type-header-inner")[0].children[3].textContent;
                     }
                     else if (url.includes("flamecomics") || url.includes("radiantscans"))
                     {
