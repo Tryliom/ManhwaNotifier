@@ -293,7 +293,7 @@ export class ManhwaNotifier
         Utils.WebsitesThatNeedToUseNetworkIdle2 = [];
         ManhwaNotifier.WebsitesDown = ["Isekaiscan", "Mm-scans", "Toonily", "Nitroscans", "Readmanganato", "Comickiba", "Vofeg", "Flonescans",
             "Manhwa-freak", "Neroscans", "Manhuascan", "Freakscans", "Tecnosca", "Kumascans", "247manga", "Mangatone", "Scansraw", "Mangatoo", "Scansraw",
-            "Mangaeffect", "Mangatx"
+            "Mangaeffect", "Mangatx", "Reaperscans"
         ];
     }
 }
