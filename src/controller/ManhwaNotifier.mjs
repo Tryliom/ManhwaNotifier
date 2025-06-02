@@ -35,7 +35,7 @@ export class ManhwaNotifier
     /** @type {number} */
     static MaxLoadTimeOccurrence = 5;
     /** @type {number} */
-    static MaxLoadTimeOccurrenceAsura = 10;
+    static MaxLoadTimeOccurrenceAsura = 5;
 
     constructor()
     {
