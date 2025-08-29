@@ -238,7 +238,7 @@ class ServerInterface extends CommandInterface
         if (interaction.customId === "test")
         {
             const server = dataCenter.GetServer(serverId);
-            const channel = this._getServerChannel(serverId);
+            const channel = dataCenter._getServerChannel(serverId);
 
             if (!channel) return;
 
@@ -441,7 +441,7 @@ class ServerInterface extends CommandInterface
                     .setDisabled(!DiscordUtility.IsAdministrator(this.Interaction.user.id, serverId)),
                 new ButtonBuilder()
                     .setLabel("Test alert message")
-                    .setStyle(ButtonStyle.Danger)
+                    .setStyle(ButtonStyle.Secondary)
                     .setCustomId("test"),
             )
         );
