@@ -234,6 +234,62 @@ class ServerInterface extends CommandInterface
                 "your manhwas"
             ).Start();
         }
+
+        if (interaction.customId === "test")
+        {
+            const server = dataCenter.GetServer(serverId);
+            const channel = this._getServerChannel(serverId);
+
+            if (!channel) return;
+
+            const roleToMention = [];
+
+            if (server.DefaultRole.IsDefined())
+            {
+                roleToMention.push(server.DefaultRole.Format());
+            }
+
+            try
+            {
+                await channel.send({
+                    embeds: [EmbedUtility.GetNeutralEmbedMessage("Test alert", "Used to test that alerts are sent in the correct channel.\nDefault role is mentioned if defined.")],
+                    content: roleToMention.join(" ")
+                });
+            }
+            catch (e)
+            {
+                if (`${e}`.startsWith("DiscordAPIError"))
+                {
+                    const guild = DiscordUtility.GetGuild(serverId);
+                    const embed = EmbedUtility.GetWarningEmbedMessage(
+                        `Discord API Error from server 🔰 ${guild !== undefined ? guild.name : `Unknown (${serverId})`} 🔰`,
+                        "The bot doesn't have the permission to send messages in the channel or doesn't see it\n" +
+                        `\`${e}\``
+                    );
+
+                    for (let admin of server.Admins)
+                    {
+                        const user = await DiscordUtility.GetUser(admin);
+
+                        if (user)
+                        {
+                            try
+                            {
+                                await user.send({embeds: [embed]});
+                            }
+                            catch (e)
+                            {
+                                if (`${e}` === "DiscordAPIError: Cannot send messages to this user")
+                                {
+                                    await this.DeleteUser(admin);
+                                    server.Admins.splice(server.Admins.indexOf(admin), 1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     ConstructEmbed()
@@ -245,17 +301,17 @@ class ServerInterface extends CommandInterface
         if (dataCenter.ExistsServer(serverId) && !dataCenter.CanManagerServerManhwas(this.Interaction.user.id, serverId) ||
             !dataCenter.ExistsServer(serverId) && !DiscordUtility.IsAdministrator(this.Interaction.user.id, serverId))
         {
-            embed.setDescription("⚠️ You are not allowed to manage the server");
+            embed.setDescription("⚠️ You are not allowed to manage the server profile");
             return embed;
         }
 
         if (!dataCenter.ExistsServer(serverId))
         {
-            embed.setDescription("You need to initialize the server first");
+            embed.setDescription("You need to initialize the server profile first");
         }
         else if (this._needToConfirmDelete)
         {
-            embed.setDescription("⚠️ Are you sure you want to delete the server ? ⚠️");
+            embed.setDescription("⚠️ Are you sure you want to delete the server profile ? ⚠️");
         }
         else
         {
@@ -269,6 +325,16 @@ class ServerInterface extends CommandInterface
                     {
                         name: "⚠️ Warning",
                         value: "You need to set a channel to receive notifications"
+                    }
+                ]);
+            }
+
+            if (dataCenter.GetServerManhwasCount(this.Interaction.guild.id) === 0)
+            {
+                embed.addFields([
+                    {
+                        name: "⚠️ Warning",
+                        value: "You need to add manhwas to the server to be able to assign roles\nBe wary that personal and server profiles are independent, use import if you want to copy your manhwas from your personal profile into the server profile"
                     }
                 ]);
             }
@@ -369,10 +435,14 @@ class ServerInterface extends CommandInterface
         components.push(
             new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
-                    .setLabel("DELETE SERVER")
+                    .setLabel("DELETE SERVER PROFILE")
                     .setStyle(ButtonStyle.Danger)
                     .setCustomId("delete-guild")
                     .setDisabled(!DiscordUtility.IsAdministrator(this.Interaction.user.id, serverId)),
+                new ButtonBuilder()
+                    .setLabel("Test alert message")
+                    .setStyle(ButtonStyle.Danger)
+                    .setCustomId("test"),
             )
         );
 
