@@ -409,32 +409,15 @@ export class Utils
 
                 if (response === null)
                 {
-                    response = await page.waitForResponse(() => true, {timeout: 5000}).catch(() => null);
+                    response = await page.waitForResponse(() => true, {timeout: 3000}).catch(() => null);
 
-                    if (response === null)
+                    if (response === null && !url.includes("asuracomic.net"))
                     {
-                        if (url.includes("asuracomic.net"))
-                        {
-                            console.log("Asura response null, retry");
-                            response = await page.waitForResponse(() => true, {timeout: 30000}).catch(() => null);
+                        const scrapInfo = new ScrapInfo();
 
-                            if (response === null)
-                            {
-                                const scrapInfo = new ScrapInfo();
+                        scrapInfo.StatusType = ScrapStatusType.NoResponse;
 
-                                scrapInfo.StatusType = ScrapStatusType.NoResponse;
-
-                                return scrapInfo;
-                            }
-                        }
-                        else
-                        {
-                            const scrapInfo = new ScrapInfo();
-
-                            scrapInfo.StatusType = ScrapStatusType.NoResponse;
-
-                            return scrapInfo;
-                        }
+                        return scrapInfo;
                     }
                 }
 
@@ -780,7 +763,7 @@ export class Utils
                 }, url, JSON.parse(JSON.stringify(new ScrapInfo()))));
 
                 scrapInfo.StartUrl = url;
-                scrapInfo.FinalUrl = response.url();
+                if (response != null) scrapInfo.FinalUrl = response.url();
                 scrapInfo.FinalClean();
 
                 return scrapInfo;
