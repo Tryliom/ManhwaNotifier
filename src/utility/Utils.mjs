@@ -218,7 +218,7 @@ export class Utils
     static async OpenNewBrowser()
     {
         return await puppeteer.launch({
-            headless: true,
+            headless: false, // Set to true after tests
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
@@ -261,22 +261,17 @@ export class Utils
     }
 
     /**
-     * Get the current id for a website, currently only support radiantscans website
+     * Get the current id for a website, just keep it for the example
      * @param websiteUrl {string} Url checked
      * @returns {Promise<string | null>} Return null if the website is not supported, else return the {manhwa id, chapter id}
      */
     static async getCurrentIdFor(websiteUrl)
     {
-        let url;
-
-        if (websiteUrl.includes("radiantscans")) url = "https://radiantscans.com";
-        else return "Website not supported";
-
-        const page = await Utils.getNewPage(url);
+        const page = await Utils.getNewPage(websiteUrl);
 
         try
         {
-            await page.goto(url, {waitUntil: "networkidle2", timeout: 30000});
+            await page.goto(websiteUrl, {waitUntil: "networkidle2", timeout: 30000});
             await page.waitForSelector('body');
 
             const id = await page.evaluate(() =>
@@ -341,7 +336,7 @@ export class Utils
             const list = await page.evaluate(() =>
             {
                 let list = [];
-                let classes = document.getElementsByClassName("grid grid-rows-1 grid-cols-1 sm:grid-cols-2 dark:bg-[#222222] bg-white p-3 pb-0");
+                let classes = document.getElementsByClassName("grid grid-rows-1 grid-cols-1 sm:grid-cols-2 bg-[#222222] p-3 pb-0");
 
                 if (classes.length === 0) return list;
 
@@ -369,70 +364,6 @@ export class Utils
                     const manhwa = returnFirstHref(item);
                     const manhwaIdPart = manhwa.split("/")[4];
                     const manhwaParts = manhwaIdPart.split("-");
-
-                    list.push({url: manhwa, id: manhwaParts[manhwaParts.length - 1]});
-                }
-
-                return list;
-            });
-
-            await page.close();
-
-            return list;
-        }
-        catch (e)
-        {
-            await page.close();
-
-            console.log(e);
-
-            return null;
-        }
-    }
-
-    static async GetReaperLastManhwas()
-    {
-        const page = await Utils.getNewPage("https://reaperscans.com");
-
-        try
-        {
-            await page.goto("https://reaperscans.com", {waitUntil: "networkidle2", timeout: 30000});
-            await page.waitForSelector('body');
-
-            const list = await page.evaluate(() =>
-            {
-                let list = [];
-                let classes = document.getElementsByClassName("flex -ml-4 px-3 lg:px-0");
-
-                if (classes.length === 0) return list;
-
-                const returnFirstHref = (node) =>
-                {
-                    if (node.href && !list.includes(node.href))
-                    {
-                        return node.href;
-                    }
-
-                    if (node.children.length > 0)
-                    {
-                        for (let item of node.children)
-                        {
-                            const result = returnFirstHref(item);
-
-                            if (result) return result;
-                        }
-                    }
-                    else return null;
-                }
-
-                for (let item of classes[0].children)
-                {
-                    const manhwa = returnFirstHref(item);
-                    const manhwaIdPart = manhwa.split("/")[4];
-                    const manhwaParts = manhwaIdPart.split("-");
-                    const id = manhwaParts[manhwaParts.length - 1];
-
-                    if (isNaN(parseInt(id))) continue;
 
                     list.push({url: manhwa, id: manhwaParts[manhwaParts.length - 1]});
                 }
@@ -474,20 +405,25 @@ export class Utils
              */
             const ScanPage = async (waitUntil) =>
             {
-                const response = await page.goto(url, {waitUntil: waitUntil, timeout: 30000});
-
-                await page.waitForSelector('body', {timeout: 5000});
+                let response = await page.goto(url, {waitUntil: waitUntil, timeout: 30000}).catch((reason) => console.log(reason));
 
                 if (response === null)
                 {
-                    const scrapInfo = new ScrapInfo();
+                    response = await page.waitForResponse(() => true, {timeout: 5000}).catch(() => null);
 
-                    scrapInfo.StatusType = ScrapStatusType.NoResponse;
+                    if (response === null)
+                    {
+                        const scrapInfo = new ScrapInfo();
 
-                    return scrapInfo;
+                        scrapInfo.StatusType = ScrapStatusType.NoResponse;
+
+                        return scrapInfo;
+                    }
                 }
 
-                if (response.status().toString().startsWith("4") || response.status().toString().startsWith("5"))
+                await page.waitForSelector('body', {timeout: 5000});
+
+                if (response != null && (response.status().toString().startsWith("4") || response.status().toString().startsWith("5")))
                 {
                     const scrapInfo = new ScrapInfo();
 
@@ -523,17 +459,7 @@ export class Utils
 
                     let listChapters;
 
-                    if (url.includes("reaperscans"))
-                    {
-                        listChapters = document.getElementsByClassName("grid grid-cols-1 gap-3");
-
-                        if (listChapters && listChapters.length > 0)
-                        {
-                            listChapters = listChapters[0];
-                        }
-                        else listChapters = false;
-                    }
-                    else if (url.includes("bato.to"))
+                    if (url.includes("bato.to"))
                     {
                         listChapters = document.getElementsByName("chapter-list")[0];
                     }
@@ -854,6 +780,13 @@ export class Utils
                 scrapInfo = await ScanPage("domcontentloaded");
             }
 
+            const oldUrl = url;
+
+            if (scrapInfo.FinalUrl.length !== 0 && scrapInfo.FinalUrl.startsWith("http") && scrapInfo.FinalUrl !== url)
+            {
+                url = scrapInfo.FinalUrl;
+            }
+
             if (scrapInfo.ChaptersUrls.length === 0)
             {
                 if (!Utils.WebsitesThatNeedToUseNetworkIdle2.includes(websiteName))
@@ -994,7 +927,7 @@ export class Utils
                 let chapter = url.split("/")[5].split("_");
                 list = chapter[chapter.length - 1].split(".");
             }
-            else if (url.includes("flamecomics") || url.includes("radiantscans"))
+            else if (url.includes("flamecomics"))
             {
                 let chapter = url.split("/")[3];
                 list = chapter.substring(chapter.indexOf("chapter") + 8, chapter.length).split("-");
@@ -1008,10 +941,6 @@ export class Utils
             {
                 const parts = url.split("/");
                 list = parts[parts.length - 2].split("-");
-            }
-            else if (url.includes("reaperscans"))
-            {
-                list = [url.split("/")[5].split("-")[1]];
             }
             else if (url.includes("comic.naver"))
             {

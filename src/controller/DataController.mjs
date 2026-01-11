@@ -391,18 +391,18 @@ export class DataController
     /**
      * Check if the user exists, if not, create it. Also update the last command date.
      * @param userID {string} The user ID
+     * @param interaction {Interaction} The interaction that triggered the check
      */
-    async CheckIfUserExist(userID)
+    async CheckIfUserExist(userID, interaction)
     {
         if (!this._users[userID])
         {
-
             this._users[userID] = new User();
 
             // Send it to log that a new user has been created
             const user = await DiscordUtility.GetUser(userID);
 
-            if (user) await Logger.LogNewUser(user);
+            if (user) await Logger.LogNewUser(user, interaction);
         }
 
         this.UpdateUserLastActionDate(userID);
@@ -1391,60 +1391,6 @@ export class DataController
         return stats;
     }
 
-    async _replaceAllIdFromLuminous()
-    {
-        const website = "https://luminouscomics.org";
-        const websiteName = Utils.getWebsiteNameFromUrl(website);
-        const id = await Utils.getCurrentIdFor(website);
-        const ReplaceId = (manhwas) =>
-        {
-            for (let manhwa of manhwas)
-            {
-                if (Utils.getWebsiteNameFromUrl(manhwa.url) !== websiteName) continue;
-
-                try
-                {
-                    // Check if the url has already an id in it and that is an integer
-                    const oldId = manhwa.url.split("/")[4].split("-")[0];
-
-                    if (oldId.length < 7) continue;
-
-                    if (isNaN(parseInt(oldId)))
-                    {
-                        // Add the id to the url
-                        const indexStartTitle = manhwa.url.indexOf(manhwa.url.split("/")[3]);
-                        manhwa.url = manhwa.url.slice(0, indexStartTitle) + id + "-" + manhwa.url.slice(indexStartTitle);
-                    }
-                    else
-                    {
-                        // Replace the id
-                        manhwa.url = manhwa.url.replace(oldId, id);
-                    }
-                }
-                catch (e) {}
-            }
-        };
-
-        if (id === null) return;
-        if (isNaN(parseInt(id))) return;
-
-        // Check for each user, check all manhwas with the same website name and replace the id of the beginning title if they have one
-        for (let userID in this._users)
-        {
-            const user = this._users[userID];
-
-            ReplaceId(user.Manhwas);
-        }
-
-        // Check for each server, check all manhwas with the same website name and replace the id of the beginning title if they have one
-        for (let serverID in this._servers)
-        {
-            const server = this._servers[serverID];
-
-            ReplaceId(server.Manhwas);
-        }
-    }
-
     /**
      * Replace all ids from asura manhwas
      * @param manhwas {[{url: string, id: string}]}
@@ -1470,78 +1416,6 @@ export class DataController
         {
             if (manhwa.url === "") continue;
             if (manhwa.id.length !== 8) continue;
-
-            const namePart = manhwa.url.split("/")[4];
-
-            try
-            {
-                for (let userID in this._users)
-                {
-                    const user = this._users[userID];
-
-                    for (let userManhwa of user.Manhwas)
-                    {
-                        if (!isSameManhwa(userManhwa.Url, manhwa.url)) continue;
-
-                        userManhwa.Url = userManhwa.Url.replace(userManhwa.Url.split("/")[4], namePart);
-
-                        for (let chapter of user.UnreadChapters)
-                        {
-                            if (isSameManhwa(chapter.Url, manhwa.url))
-                            {
-                                chapter.Url = chapter.Url.replace(chapter.Url.split("/")[4], namePart);
-                            }
-                        }
-
-                        break;
-                    }
-                }
-
-                for (let serverID in this._servers)
-                {
-                    const server = this._servers[serverID];
-
-                    for (let serverManhwa of server.Manhwas)
-                    {
-                        if (!isSameManhwa(serverManhwa.Url, manhwa.url)) continue;
-
-                        serverManhwa.Url = serverManhwa.Url.replace(serverManhwa.Url.split("/")[4], namePart);
-
-                        break;
-                    }
-                }
-            }
-            catch (e) {}
-        }
-    }
-
-    /**
-     * Replace all ids from reaper scans manhwas
-     * @param manhwas {[{url: string, id: string}]}
-     */
-    _replaceAllIdFromReaperScans(manhwas)
-    {
-        if (!manhwas) return;
-
-        const isSameManhwa = (url1, url2) =>
-        {
-            const url1Split = url1.split("/")[4].split("-");
-            const url2Split = url2.split("/")[4].split("-");
-            const length = url1Split.length > url2Split.length ? url2Split.length : url1Split.length;
-
-            for (let i = 0; i < length - 1; i++)
-            {
-                if (i >= url1Split.length || i >= url2Split.length) return false;
-                if (url1Split[i] !== url2Split[i]) return false;
-            }
-
-            return true;
-        }
-
-        for (let manhwa of manhwas)
-        {
-            if (manhwa.url === "") continue;
-            if (manhwa.id.length !== 3) continue;
 
             const namePart = manhwa.url.split("/")[4];
 
@@ -2025,6 +1899,14 @@ export class DataController
         const scrapInfo = cachedScrap.length > 0 ? cachedScrap[0] : await this._tryToScrapManhwa(url, users, serverID);
 
         if (scrapInfo === null) return [];
+
+        if (scrapInfo.FinalUrl !== url && scrapInfo.FinalUrl.length !== 0 && scrapInfo.FinalUrl.startsWith("http"))
+        {
+            manhwa.Url = scrapInfo.FinalUrl;
+        }
+
+        if (scrapInfo.StatusType === ScrapStatusType.NoChapters || scrapInfo.ChaptersUrls.length === 0) return [];
+
         if (cachedScrap.length === 0) cache.push(scrapInfo);
         // If the chapter get contains GitHub, then continue
         if (scrapInfo.ChaptersUrls[0].includes("github.com")) return [];
@@ -2119,8 +2001,6 @@ export class DataController
 
     async StartCheckOfAllManhwas()
     {
-        const dateFrom12hrs = new Date() - 43200000;
-        const dateFrom1Week = new Date() - 604800000;
         const dateFrom1Month = new Date() - 2592000000;
         /** @type {ScrapInfo[]} */
         const cache = [];
@@ -2131,9 +2011,7 @@ export class DataController
 
         ManhwaNotifier.LastCheckStep = "Check ids";
 
-        await this._replaceAllIdFromLuminous();
         await this._replaceAllIdFromAsura(await Utils.GetAsuraLastManhwa());
-        await this._replaceAllIdFromReaperScans(await Utils.GetReaperLastManhwas());
 
         ManhwaNotifier.LastCheckStep = "Begin server check";
 

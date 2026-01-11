@@ -15,8 +15,9 @@ export class Logger
     /**
      * Log a message into users log channel that a new user use the bot
      * @param user {User}
+     * @param interaction {Interaction}
      */
-    static async LogNewUser(user)
+    static async LogNewUser(user, interaction)
     {
         const client = ManhwaNotifier.Instance.DiscordClient;
         const userChannel = ManhwaNotifier.Instance.DataCenter.GetUserLogChannel();
@@ -24,7 +25,8 @@ export class Logger
         if (!userChannel.IsDefined()) return;
 
         const channel = client.channels.cache.find(channel => channel.id === userChannel.Id);
-        const embed = EmbedUtility.GetGoodEmbedMessage("New user", `User named ${user.username} (${user.id}) has been created`);
+        const source = interaction.guild ? `Server [${interaction.guild.name}] (${interaction.guild.id})` : "Direct Message";
+        const embed = EmbedUtility.GetGoodEmbedMessage("New user", `User named ${user.username} (${user.id}) from ${source} has been created`);
 
         if (!channel) return;
 

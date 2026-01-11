@@ -109,7 +109,7 @@ export class Command
 
     async Run(interaction)
     {
-        if (this.NeedAnAccount) await ManhwaNotifier.Instance.DataCenter.CheckIfUserExist(interaction.user.id);
+        if (this.NeedAnAccount) await ManhwaNotifier.Instance.DataCenter.CheckIfUserExist(interaction.user.id, interaction);
     }
 
     OnUpdateLibrary() {}

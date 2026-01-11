@@ -136,7 +136,7 @@ export class CommandController
 
             if (command.NeedAnAccount)
             {
-                await ManhwaNotifier.Instance.DataCenter.CheckIfUserExist(interaction.user.id);
+                await ManhwaNotifier.Instance.DataCenter.CheckIfUserExist(interaction.user.id, interaction);
             }
 
             await command.OnAutocomplete(interaction, focusedOption);
