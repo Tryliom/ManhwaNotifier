@@ -780,13 +780,6 @@ export class Utils
                 scrapInfo = await ScanPage("domcontentloaded");
             }
 
-            const oldUrl = url;
-
-            if (scrapInfo.FinalUrl.length !== 0 && scrapInfo.FinalUrl.startsWith("http") && scrapInfo.FinalUrl !== url)
-            {
-                url = scrapInfo.FinalUrl;
-            }
-
             if (scrapInfo.ChaptersUrls.length === 0)
             {
                 if (!Utils.WebsitesThatNeedToUseNetworkIdle2.includes(websiteName))

@@ -1898,15 +1898,13 @@ export class DataController
         const cachedScrap = cache.filter(scrap => scrap.StartUrl === url || scrap.FinalUrl === url);
         const scrapInfo = cachedScrap.length > 0 ? cachedScrap[0] : await this._tryToScrapManhwa(url, users, serverID);
 
-        if (scrapInfo === null) return [];
-
-        if (scrapInfo.FinalUrl !== url && scrapInfo.FinalUrl.length !== 0 && scrapInfo.FinalUrl.startsWith("http"))
+        if (url.startsWith("https://asuracomic.net/series/reaper-of-the-drifting-moon") && scrapInfo !== null)
         {
-            manhwa.Url = scrapInfo.FinalUrl;
+            console.log(scrapInfo);
         }
 
+        if (scrapInfo === null) return [];
         if (scrapInfo.StatusType === ScrapStatusType.NoChapters || scrapInfo.ChaptersUrls.length === 0) return [];
-
         if (cachedScrap.length === 0) cache.push(scrapInfo);
         // If the chapter get contains GitHub, then continue
         if (scrapInfo.ChaptersUrls[0].includes("github.com")) return [];
