@@ -413,11 +413,28 @@ export class Utils
 
                     if (response === null)
                     {
-                        const scrapInfo = new ScrapInfo();
+                        if (url.includes("asuracomic.net"))
+                        {
+                            console.log("Asura response null, retry");
+                            response = await page.waitForResponse(() => true, {timeout: 10000}).catch(() => null);
 
-                        scrapInfo.StatusType = ScrapStatusType.NoResponse;
+                            if (response === null)
+                            {
+                                const scrapInfo = new ScrapInfo();
 
-                        return scrapInfo;
+                                scrapInfo.StatusType = ScrapStatusType.NoResponse;
+
+                                return scrapInfo;
+                            }
+                        }
+                        else
+                        {
+                            const scrapInfo = new ScrapInfo();
+
+                            scrapInfo.StatusType = ScrapStatusType.NoResponse;
+
+                            return scrapInfo;
+                        }
                     }
                 }
 
