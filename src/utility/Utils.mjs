@@ -218,7 +218,7 @@ export class Utils
     static async OpenNewBrowser()
     {
         return await puppeteer.launch({
-            headless: false, // Set to true after tests
+            headless: true,
             args: [
                 "--no-sandbox",
                 "--disable-setuid-sandbox",
