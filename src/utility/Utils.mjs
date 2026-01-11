@@ -416,7 +416,7 @@ export class Utils
                         if (url.includes("asuracomic.net"))
                         {
                             console.log("Asura response null, retry");
-                            response = await page.waitForResponse(() => true, {timeout: 10000}).catch(() => null);
+                            response = await page.waitForResponse(() => true, {timeout: 30000}).catch(() => null);
 
                             if (response === null)
                             {
