@@ -140,13 +140,28 @@ class UnreadViewer extends CommandInterface
             const embed = EmbedUtility.GetGoodEmbedMessage(manhwa.Name);
             const description = [];
             let totalLength = 0;
+            let faultyUrls = 0;
 
             if (manhwa.IsImageValid()) embed.setImage(manhwa.Image);
 
             for (let formattedChapter of manhwa.OrderedUrls)
             {
+                /**
+                 * Have one occurrence of this, when getting chapter the url is correct, but when displaying it, there's some garbage before the https://, so after the check there is a moment when the url changes
+                 * I don't know when, so I fix it here
+                 */
+                if (!formattedChapter.Url.startsWith("https://") && formattedChapter.Url.includes("https://"))
+                {
+                    formattedChapter.Url = formattedChapter.Url.substring(formattedChapter.Url.indexOf("https://"));
+                }
+
                 description.push(`[${formattedChapter.Name}](${formattedChapter.Url})`);
                 totalLength += description[description.length - 1].length;
+
+                if (!formattedChapter.Url.startsWith("https://"))
+                {
+                    faultyUrls++;
+                }
 
                 if ((totalLength >= 3500 || manhwa.OrderedUrls.indexOf(formattedChapter) === 11) && manhwa.OrderedUrls.indexOf(formattedChapter) + 1 !== manhwa.OrderedUrls.length)
                 {
@@ -155,7 +170,15 @@ class UnreadViewer extends CommandInterface
                 }
             }
 
-            embed.setDescription(description.join("\n"));
+            if (faultyUrls > 0)
+            {
+                embed.setDescription(`${description.join("\n")}\n\n*${faultyUrls} chapter(s) have no valid URL to open, you can still mark them as read manually*`);
+            }
+            else
+            {
+                embed.setDescription(description.join("\n"));
+            }
+
             embed.setFooter({text: `Page ${this._page + 1}/${Object.keys(this._unreadChapters).length}`});
 
             return embed;
@@ -193,20 +216,38 @@ class UnreadViewer extends CommandInterface
             this.AddMenuComponents(components, 0);
         }
 
-        components.push(
-            new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setLabel("Mark all as read")
-                        .setEmoji({name: "📖"})
-                        .setStyle(ButtonStyle.Secondary)
-                        .setCustomId("read-all"),
-                    new ButtonBuilder()
-                        .setLabel("Open chapter")
-                        .setStyle(ButtonStyle.Link)
-                        .setURL(this._unreadChapters[Object.keys(this._unreadChapters)[this._page]].OrderedUrls[0].Url)
-                )
-        );
+        const url = this._unreadChapters[Object.keys(this._unreadChapters)[this._page]].OrderedUrls[0].Url;
+
+        if (!url.startsWith("https://"))
+        {
+            components.push(
+                new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setLabel("Mark all as read")
+                            .setEmoji({name: "📖"})
+                            .setStyle(ButtonStyle.Secondary)
+                            .setCustomId("read-all")
+                    )
+            );
+        }
+        else
+        {
+            components.push(
+                new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setLabel("Mark all as read")
+                            .setEmoji({name: "📖"})
+                            .setStyle(ButtonStyle.Secondary)
+                            .setCustomId("read-all"),
+                        new ButtonBuilder()
+                            .setLabel("Open chapter")
+                            .setStyle(ButtonStyle.Link)
+                            .setURL(url)
+                    )
+            );
+        }
 
         this.AddMenuComponents(components, 1);
 
