@@ -7,6 +7,7 @@ import {ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType} from "discord
 import {TransferInterface} from "../menus/TransferInterface.mjs";
 import {PermissionFlagsBits} from "discord-api-types/v10";
 import {EmojiUtility} from "../../utility/EmojiUtility.mjs";
+import {SecurityUtility} from "../../utility/SecurityUtility.mjs";
 
 export class Server extends Command
 {
@@ -132,6 +133,11 @@ class ServerInterface extends CommandInterface
     constructor(interaction)
     {
         super(interaction);
+
+        if (SecurityUtility.IsCreator(interaction.user.id))
+        {
+            this.SetEphemeral(true);
+        }
     }
 
     async OnButton(interaction)
@@ -466,6 +472,11 @@ class AdminManager extends CommandInterface
         this._dataController = ManhwaNotifier.Instance.DataCenter;
         this._onReturn = onReturn;
 
+        if (SecurityUtility.IsCreator(lastInteraction.user.id))
+        {
+            this.SetEphemeral(true);
+        }
+
         this.SetLastInteraction(lastInteraction);
         this.SetMenuList([
             {
@@ -568,6 +579,11 @@ class ChannelManager extends CommandInterface
 
         this._dataController = ManhwaNotifier.Instance.DataCenter;
         this._onReturn = onReturn;
+
+        if (SecurityUtility.IsCreator(lastInteraction.user.id))
+        {
+            this.SetEphemeral(true);
+        }
 
         this.SetLastInteraction(lastInteraction);
         this.SetMenuList([
@@ -679,6 +695,11 @@ class RoleManager extends CommandInterface
 
         this._dataController = ManhwaNotifier.Instance.DataCenter;
         this._onReturn = onReturn;
+
+        if (SecurityUtility.IsCreator(lastInteraction.user.id))
+        {
+            this.SetEphemeral(true);
+        }
 
         this.SetLastInteraction(lastInteraction);
         this.SetMenuList([
