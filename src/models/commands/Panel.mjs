@@ -729,7 +729,7 @@ class ServerManager extends CommandInterface
                     {
                         const index = this._guilds.indexOf(server);
                         const serverData = this._dataController.GetServer(server.id);
-                        const option = {label: server, description: `${serverData.Manhwas.length} manhwas`, value: index};
+                        const option = {label: server.name, description: `${serverData.Manhwas.length} manhwas`, value: index};
 
                         if (index === this.page) option.default = true;
 
@@ -825,14 +825,10 @@ class ServerManager extends CommandInterface
             return embed;
         }
 
-        console.log("Displaying server " + this.page + " / " + this._guilds.length);
-
         /** @type {Guild} */
         const server = this._guilds[this.page];
         const owner = ManhwaNotifier.Instance.DiscordClient.users.cache.get(server.ownerId);
         const serverData = this._dataController.GetServer(server.id);
-
-        console.log(`${server.name} owned by ${owner ? owner.username : "unknown"}`);
 
         embed.setDescription(`**${server.name}** (${server.id})`);
         embed.addFields([
@@ -841,6 +837,22 @@ class ServerManager extends CommandInterface
             {name: "\u200B", value: "\u200B"},
             {name: "Infos", value: `${serverData.Manhwas.length} manhwas`},
         ]);
+
+        // List first 5 manhwas
+        let manhwaList = [];
+        for (let i = 0; i < Math.min(5, serverData.Manhwas.length); i++)
+        {
+            const manhwa = serverData.Manhwas[i];
+
+            manhwaList.push(`- [${manhwa.Name}](${manhwa.Url})`);
+        }
+
+        if (manhwaList.length > 0)
+        {
+            embed.addFields([
+                {name: "Manhwas", value: manhwaList.join("\n")}
+            ]);
+        }
 
         return embed;
     }
@@ -853,7 +865,7 @@ class ServerManager extends CommandInterface
 
         if (this._guilds.length > 1)
         {
-            //this.AddMenuComponents(components);
+            this.AddMenuComponents(components);
             components.push(this.GetChangePageButtons());
         }
 
