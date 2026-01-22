@@ -694,6 +694,8 @@ class ServerManager extends CommandInterface
     _onReturn
     /** @type {number} */
     page = 0;
+    /** @type {boolean} */
+    _loading = true;
 
     constructor(interaction, lastInteraction, onReturn)
     {
@@ -731,7 +733,7 @@ class ServerManager extends CommandInterface
         ]);
     }
 
-    async OnAction()
+    async Load()
     {
         // Fetch non cached guilds
         await this._dataController.FetchGuilds();
@@ -745,11 +747,22 @@ class ServerManager extends CommandInterface
             // Preload owners
             await ManhwaNotifier.Instance.DiscordClient.users.fetch(guild.ownerId);
         }
+
+        this._loading = false;
+
+        await this.UpdateMsg();
     }
 
     ConstructEmbed()
     {
         const embed = EmbedUtility.GetNeutralEmbedMessage("Servers");
+
+        if (this._loading)
+        {
+            embed.setDescription("Loading servers...");
+            this.Load();
+            return embed;
+        }
 
         const servers = this._dataController.GetAllGuilds();
 
