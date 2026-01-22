@@ -2437,4 +2437,41 @@ export class DataController
 
         return code;
     }
+
+    async FetchGuilds()
+    {
+        for (const serverId in this._servers)
+        {
+            let server = ManhwaNotifier.Instance.DiscordClient.guilds.cache.get(serverId);
+
+            if (!server)
+            {
+                try
+                {
+                    await ManhwaNotifier.Instance.DiscordClient.guilds.fetch(serverId);
+                }
+                catch (error) {}
+            }
+        }
+    }
+
+    /**
+     * @brief Get all guilds where the bot is registered
+     * @return {Guild[]} The guilds where the bot is registered
+     */
+    GetAllGuilds()
+    {
+        const servers = [];
+
+        for (const serverId in this._servers)
+        {
+            let server = ManhwaNotifier.Instance.DiscordClient.guilds.cache.get(serverId);
+
+            if (!server) continue;
+
+            servers.push(server);
+        }
+
+        return servers;
+    }
 }

@@ -63,6 +63,18 @@ class PanelInterface extends CommandInterface
             ).Start();
         }
 
+        if (interaction.customId === "servers")
+        {
+            this.IgnoreInteractions = true;
+            await new ServerManager(this.Interaction, interaction, async (lastInteraction) =>
+                {
+                    this.IgnoreInteractions = false;
+                    this.LastInteraction = lastInteraction;
+                    await this.UpdateMsg();
+                }
+            ).Start();
+        }
+
         if (interaction.customId === "restart")
         {
             await this.UpdateMsg(EmbedUtility.GetGoodEmbedMessage("Success", "Bot is restarting.."));
@@ -361,7 +373,12 @@ class PanelInterface extends CommandInterface
                     .setEmoji({name: "📺"})
                     .setStyle(ButtonStyle.Secondary)
                     .setCustomId("channel-manager")
-                    .setDisabled(this.Interaction.guild === null)
+                    .setDisabled(this.Interaction.guild === null),
+                new ButtonBuilder()
+                    .setLabel("Servers")
+                    .setEmoji({name: "🛠️"})
+                    .setStyle(ButtonStyle.Secondary)
+                    .setCustomId("servers"),
             )
         );
 
@@ -503,7 +520,7 @@ class FaqManager extends CommandInterface
         }
         else if (interaction.customId === "faq_delete")
         {
-            await this._dataController.DeleteFaq(this.page);
+            this._dataController.DeleteFaq(this.page);
             this.page = 0;
         }
         else if (interaction.customId === "faq_add")
@@ -665,6 +682,136 @@ class ChannelManager extends CommandInterface
             this.IgnoreInteractions = true;
             await this.StopCollector(false, false);
             await this._onReturn(this.LastInteraction);
+        }
+    }
+}
+
+class ServerManager extends CommandInterface
+{
+    /** @type {DataController} */
+    _dataController
+    /** @type {function (lastInteraction: CommandInteraction)} */
+    _onReturn
+    /** @type {number} */
+    page = 0;
+
+    constructor(interaction, lastInteraction, onReturn)
+    {
+        super(interaction);
+
+        this._dataController = ManhwaNotifier.Instance.DataCenter;
+        this._onReturn = onReturn;
+
+        this.SetLastInteraction(lastInteraction);
+        this.SetEphemeral(true);
+        this.SetMenuList([
+            {
+                onMenuClick: values => this.page = parseInt(values[0]),
+                getList: () =>
+                {
+                    const servers = this._dataController.GetAllGuilds();
+                    const list = [];
+
+                    for (const server of servers)
+                    {
+                        const index = servers.indexOf(server);
+                        const serverData = this._dataController.GetServer(server.id);
+                        const option = {label: server, description: `${serverData.Manhwas.length} manhwas`, value: index};
+
+                        if (index === this.page) option.default = true;
+
+                        list.push(option);
+                    }
+
+                    return list;
+                },
+                options: {label: item => item.label, description: item => item.description, value: item => item.value, default: item => item.default || false},
+                placeholder: "Select server.."
+            }
+        ]);
+    }
+
+    async OnAction()
+    {
+        // Fetch non cached guilds
+        await this._dataController.FetchGuilds();
+
+        const servers = this._dataController.GetAllGuilds();
+
+        for (let guild of servers)
+        {
+            if (!guild.ownerId) continue;
+
+            // Preload owners
+            await ManhwaNotifier.Instance.DiscordClient.users.fetch(guild.ownerId);
+        }
+    }
+
+    ConstructEmbed()
+    {
+        const embed = EmbedUtility.GetNeutralEmbedMessage("Servers");
+
+        const servers = this._dataController.GetAllGuilds();
+
+        if (servers.length === 0)
+        {
+            embed.setDescription("There are no servers available.");
+            return embed;
+        }
+
+        /** @type {Guild} */
+        const server = servers[this.page];
+        const owner = ManhwaNotifier.Instance.DiscordClient.users.cache.get(server.ownerId);
+        const serverData = this._dataController.GetServer(server.id);
+
+        embed.setDescription(`**${server.name}** (${server.id})`);
+        embed.addFields([
+            {name: "Members", value: `${server.memberCount} members`, inline: true},
+            {name: "Owner", value: owner.username, inline: true},
+            {name: "\u200B", value: "\u200B"},
+            {name: "Infos", value: `${serverData.Manhwas.length} manhwas`},
+        ]);
+
+        return embed;
+    }
+
+    ConstructComponents()
+    {
+        const components = [];
+
+        const servers = this._dataController.GetAllGuilds();
+
+        if (servers.length > 1)
+        {
+            this.AddMenuComponents(components);
+            components.push(this.GetChangePageButtons());
+        }
+
+        components.push(
+            new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(`return`)
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji(EmojiUtility.GetEmojiData(EmojiUtility.Emojis.Return))
+            )
+        );
+
+        return components;
+    }
+
+    async OnButton(interaction)
+    {
+        if (interaction.customId === "return")
+        {
+            this.IgnoreInteractions = true;
+            await this.StopCollector(false, false);
+            await this._onReturn(this.LastInteraction);
+        }
+        else
+        {
+            const servers = ManhwaNotifier.Instance.DataCenter.GetAllGuilds();
+
+            this.OnButtonChangePage(interaction, servers.length, 0);
         }
     }
 }
