@@ -792,6 +792,8 @@ class ServerManager extends CommandInterface
     {
         const components = [];
 
+        if (this._loading) return components;
+
         const servers = this._dataController.GetAllGuilds();
 
         if (servers.length > 1)
