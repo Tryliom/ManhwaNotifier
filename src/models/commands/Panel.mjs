@@ -795,6 +795,8 @@ class ServerManager extends CommandInterface
 
         for (let guild of this._guilds)
         {
+            this._loadingCounter++;
+
             if (!guild.ownerId) continue;
 
             // Preload owners
