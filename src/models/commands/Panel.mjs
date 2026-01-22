@@ -789,8 +789,6 @@ class ServerManager extends CommandInterface
             this._guilds.push(server);
         }
 
-        await new Promise(r => setTimeout(r, 10000));
-
         this._loadingCounter = 0;
         this._loadingMaxCounter = this._guilds.length;
         this._loadingStep = "Preloading owners";
@@ -836,12 +834,6 @@ class ServerManager extends CommandInterface
 
         console.log(`${server.name} owned by ${owner ? owner.username : "unknown"}`);
 
-        if (owner.username.startsWith("deleted_user"))
-        {
-            embed.setDescription("The owner of this server has deleted their Discord account.");
-            return embed;
-        }
-
         embed.setDescription(`**${server.name}** (${server.id})`);
         embed.addFields([
             {name: "Members", value: `${server.memberCount} members`, inline: true},
@@ -857,7 +849,7 @@ class ServerManager extends CommandInterface
     {
         const components = [];
 
-        if (this._loading) return components;
+        if (this._loading || true) return components;
 
         if (this._guilds.length > 1)
         {
