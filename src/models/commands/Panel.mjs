@@ -789,6 +789,8 @@ class ServerManager extends CommandInterface
             this._guilds.push(server);
         }
 
+        await new Promise(r => setTimeout(r, 10000));
+
         this._loadingCounter = 0;
         this._loadingMaxCounter = this._guilds.length;
         this._loadingStep = "Preloading owners";
@@ -806,11 +808,7 @@ class ServerManager extends CommandInterface
         this._loading = false;
         clearInterval(updateLoading);
 
-        console.log("0")
         await this.UpdateMsg();
-        console.log("1")
-        await this.UpdateMsg();
-        console.log("2")
     }
 
     ConstructEmbed()
@@ -829,10 +827,14 @@ class ServerManager extends CommandInterface
             return embed;
         }
 
+        console.log("Displaying server " + this.page + " / " + this._guilds.length);
+
         /** @type {Guild} */
         const server = this._guilds[this.page];
         const owner = ManhwaNotifier.Instance.DiscordClient.users.cache.get(server.ownerId);
         const serverData = this._dataController.GetServer(server.id);
+
+        console.log(`${server.name} owned by ${owner ? owner.username : "unknown"}`);
 
         embed.setDescription(`**${server.name}** (${server.id})`);
         embed.addFields([
