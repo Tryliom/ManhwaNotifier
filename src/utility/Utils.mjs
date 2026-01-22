@@ -7,13 +7,12 @@ import {ScrapStatusType} from "../models/ScrapStatusType.mjs";
 
 const SupportedWebsites = [
     "https://asuracomic.net/series/",
-    "https://zinmanga.net/manga/",
     "https://manhuaplus.com/manga/",
     "https://manhwabuddy.com/manhwa/",
     "https://kingofshojo.com/manga/",
     "https://toonclash.com/manga/",
     "https://mangabuddy.com/",
-    "https://roliascan.com/manga/"
+    "https://arenascan.com/manga/"
 ];
 
 const titleFormat = /[\[\]',.’`?!()\n&:\/\\]/g;
@@ -674,7 +673,7 @@ export class Utils
                     {
                         scrapInfo.Name = document.getElementsByClassName("post-type-header-inner")[0].children[3].textContent;
                     }
-                    else if (url.includes("flamecomics") || url.includes("radiantscans"))
+                    else if (url.includes("flamecomics") || url.includes("radiantscans") || url.includes("arenascan"))
                     {
                         if (document.getElementsByClassName("entry-title").length > 0)
                         {
@@ -929,6 +928,11 @@ export class Utils
             {
                 const parts = url.split("/");
                 list = parts[parts.length - 1].split("-");
+            }
+            else if (url.includes("arenascan"))
+            {
+                const parts = url.split("/");
+                list = parts[parts.length - 2].split("-");
             }
             else if (url.includes("kingofshojo"))
             {
