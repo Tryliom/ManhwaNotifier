@@ -802,7 +802,7 @@ class ServerManager extends CommandInterface
             if (!guild.ownerId) continue;
 
             // Preload owners
-            await ManhwaNotifier.Instance.DiscordClient.users.fetch(guild.ownerId);
+            const user = await ManhwaNotifier.Instance.DiscordClient.users.fetch(guild.ownerId);
         }
 
         this._loading = false;
@@ -835,6 +835,12 @@ class ServerManager extends CommandInterface
         const serverData = this._dataController.GetServer(server.id);
 
         console.log(`${server.name} owned by ${owner ? owner.username : "unknown"}`);
+
+        if (owner.username.startsWith("deleted_user"))
+        {
+            embed.setDescription("The owner of this server has deleted their Discord account.");
+            return embed;
+        }
 
         embed.setDescription(`**${server.name}** (${server.id})`);
         embed.addFields([
