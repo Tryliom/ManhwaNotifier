@@ -800,7 +800,7 @@ class ServerManager extends CommandInterface
             if (!guild.ownerId) continue;
 
             // Preload owners
-            const user = await ManhwaNotifier.Instance.DiscordClient.users.fetch(guild.ownerId);
+            await ManhwaNotifier.Instance.DiscordClient.users.fetch(guild.ownerId);
         }
 
         this._loading = false;
@@ -849,11 +849,11 @@ class ServerManager extends CommandInterface
     {
         const components = [];
 
-        if (this._loading || true) return components;
+        if (this._loading) return components;
 
         if (this._guilds.length > 1)
         {
-            this.AddMenuComponents(components);
+            //this.AddMenuComponents(components);
             components.push(this.GetChangePageButtons());
         }
 
