@@ -800,15 +800,17 @@ class ServerManager extends CommandInterface
             if (!guild.ownerId) continue;
 
             // Preload owners
-            console.log(`Starting to load owner (${guild.ownerId}) for guild ${guild.id} (${guild.name})`);
             await ManhwaNotifier.Instance.DiscordClient.users.fetch(guild.ownerId);
         }
 
-        console.log("Finished loading servers for server manager");
         this._loading = false;
         clearInterval(updateLoading);
 
+        console.log("0")
         await this.UpdateMsg();
+        console.log("1")
+        await this.UpdateMsg();
+        console.log("2")
     }
 
     ConstructEmbed()
