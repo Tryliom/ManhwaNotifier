@@ -696,6 +696,16 @@ class ServerManager extends CommandInterface
     page = 0;
     /** @type {boolean} */
     _loading = true;
+    /** @type {number} */
+    _loadingCounter = 0;
+    /** @type {number} */
+    _loadingMaxCounter = 0;
+    /** @type {string} */
+    _loadingStep = "";
+    /** @type {Object<string, Server>} */
+    _servers = {}
+    /** @type {Guild[]} */
+    _guilds = []
 
     constructor(interaction, lastInteraction, onReturn)
     {
@@ -703,6 +713,8 @@ class ServerManager extends CommandInterface
 
         this._dataController = ManhwaNotifier.Instance.DataCenter;
         this._onReturn = onReturn;
+        this._servers = this._dataController.GetServers();
+        this._loadingStep = "Fetching guilds";
 
         this.SetLastInteraction(lastInteraction);
         this.SetEphemeral(true);
@@ -711,12 +723,11 @@ class ServerManager extends CommandInterface
                 onMenuClick: values => this.page = parseInt(values[0]),
                 getList: () =>
                 {
-                    const servers = this._dataController.GetAllGuilds();
                     const list = [];
 
-                    for (const server of servers)
+                    for (const server of this._guilds)
                     {
-                        const index = servers.indexOf(server);
+                        const index = this._guilds.indexOf(server);
                         const serverData = this._dataController.GetServer(server.id);
                         const option = {label: server, description: `${serverData.Manhwas.length} manhwas`, value: index};
 
@@ -731,16 +742,58 @@ class ServerManager extends CommandInterface
                 placeholder: "Select server.."
             }
         ]);
+
+        this.Load();
     }
 
     async Load()
     {
+        const updateLoading = setInterval(() =>
+        {
+            this.UpdateMsg();
+        }, 5 * 1000);
+
+        this._loadingCounter = 0;
+        this._loadingMaxCounter = Object.keys(this._servers).length;
+        this._loadingStep = "Fetching guilds";
+
         // Fetch non cached guilds
-        await this._dataController.FetchGuilds();
+        for (const serverId in this._servers)
+        {
+            let server = ManhwaNotifier.Instance.DiscordClient.guilds.cache.get(serverId);
 
-        const servers = this._dataController.GetAllGuilds();
+            if (!server)
+            {
+                try
+                {
+                    await ManhwaNotifier.Instance.DiscordClient.guilds.fetch(serverId);
+                }
+                catch (error) {}
+            }
 
-        for (let guild of servers)
+            this._loadingCounter++;
+        }
+
+        this._loadingCounter = 0;
+        this._loadingMaxCounter = Object.keys(this._servers).length;
+        this._loadingStep = "Loading guilds";
+
+        for (const serverId in this._servers)
+        {
+            let server = ManhwaNotifier.Instance.DiscordClient.guilds.cache.get(serverId);
+
+            this._loadingCounter++;
+
+            if (!server) continue;
+
+            this._guilds.push(server);
+        }
+
+        this._loadingCounter = 0;
+        this._loadingMaxCounter = this._guilds.length;
+        this._loadingStep = "Preloading owners";
+
+        for (let guild of this._guilds)
         {
             if (!guild.ownerId) continue;
 
@@ -749,6 +802,7 @@ class ServerManager extends CommandInterface
         }
 
         this._loading = false;
+        clearInterval(updateLoading);
 
         await this.UpdateMsg();
     }
@@ -759,21 +813,18 @@ class ServerManager extends CommandInterface
 
         if (this._loading)
         {
-            embed.setDescription("Loading servers...");
-            this.Load();
+            embed.setDescription(`Loading servers - ${this._loadingStep} - (${this._loadingCounter}/${this._loadingMaxCounter})`);
             return embed;
         }
 
-        const servers = this._dataController.GetAllGuilds();
-
-        if (servers.length === 0)
+        if (this._guilds.length === 0)
         {
             embed.setDescription("There are no servers available.");
             return embed;
         }
 
         /** @type {Guild} */
-        const server = servers[this.page];
+        const server = this._guilds[this.page];
         const owner = ManhwaNotifier.Instance.DiscordClient.users.cache.get(server.ownerId);
         const serverData = this._dataController.GetServer(server.id);
 
@@ -794,9 +845,7 @@ class ServerManager extends CommandInterface
 
         if (this._loading) return components;
 
-        const servers = this._dataController.GetAllGuilds();
-
-        if (servers.length > 1)
+        if (this._guilds.length > 1)
         {
             this.AddMenuComponents(components);
             components.push(this.GetChangePageButtons());
@@ -824,9 +873,7 @@ class ServerManager extends CommandInterface
         }
         else
         {
-            const servers = ManhwaNotifier.Instance.DataCenter.GetAllGuilds();
-
-            this.OnButtonChangePage(interaction, servers.length, 0);
+            this.OnButtonChangePage(interaction, this._guilds.length, 0);
         }
     }
 }
