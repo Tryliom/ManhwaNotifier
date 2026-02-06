@@ -46,7 +46,6 @@ export class CheckManhwaUrl extends Command
         }
 
         const embed = EmbedUtility.GetGoodEmbedMessage(`Scan of [${scrapInfo.Name}]`)
-            .setURL(scrapInfo.FinalUrl)
             .addFields([
                 {name: "Total chapters", value: `${scrapInfo.ChaptersUrls.length} chapters`, inline: true},
                 {name: "Last chapter", value: `[${Utils.formatChapterFromURL(scrapInfo.ChaptersUrls[0])}](${scrapInfo.ChaptersUrls[0]})`, inline: true},
@@ -65,6 +64,11 @@ export class CheckManhwaUrl extends Command
         checks.push(`Image: ${isOk(scrapInfo.IsImageValid())}`);
         checks.push(`Chapters: ${isOk(scrapInfo.ChaptersUrls.length > 0)}`);
         checks.push(`Chapter format: ${isOk(Utils.formatChapterFromURL(scrapInfo.ChaptersUrls[0]) !== "Chapter ?")}`);
+
+        if (scrapInfo.FinalUrl.length > 0 && scrapInfo.FinalUrl.startsWith("http"))
+        {
+            embed.setURL(scrapInfo.FinalUrl);
+        }
 
         embed.addFields([
             {

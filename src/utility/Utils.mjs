@@ -762,7 +762,16 @@ export class Utils
                 }, url, JSON.parse(JSON.stringify(new ScrapInfo()))));
 
                 scrapInfo.StartUrl = url;
-                if (response != null) scrapInfo.FinalUrl = response.url();
+
+                if (response != null)
+                {
+                    scrapInfo.FinalUrl = response.url();
+                }
+                else
+                {
+                    scrapInfo.FinalUrl = url;
+                }
+
                 scrapInfo.FinalClean();
 
                 return scrapInfo;
