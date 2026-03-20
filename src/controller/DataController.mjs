@@ -21,6 +21,7 @@ import {FormattedUrl, UnreadManhwa} from "../models/datas/UnreadManhwa.mjs";
 import {StringUtility} from "../utility/StringUtility.mjs";
 import {TextInputStyle} from "discord-api-types/v8";
 import {Code} from "../models/datas/Code.mjs";
+import {SecurityUtility} from "../utility/SecurityUtility.mjs";
 
 /**
  * Give a path where to load file if it's a .json or .txt
@@ -531,17 +532,17 @@ export class DataController
      */
     _applyChangesToData()
     {
-        // Change all url of asura to https://asuracomic.net
-        const asuraUrl = "https://asuracomic.net";
-        const urls = ["https://asuratoon.com", "https://asuracomics.com", "https://asura.nacm.xyz", "https://asura.gg", "https://asuracomics.gg", "https://www.asurascans.com"];
+        // Asura changed the url of their series, we need to update the urls in the user and server data
+        const newAsuraUrl = "https://asurascans.com/comics/";
+        const oldAsuraUrls = ["https://asuracomic.net/series/"];
 
-        const ReplaceUrl = (url, urlsToBeReplaced, replaceUrl) =>
+        const ReplaceUrl = (url, oldUrls, newUrl) =>
         {
-            for (let urlToReplace of urlsToBeReplaced)
+            for (let urlToReplace of oldUrls)
             {
                 if (url.startsWith(urlToReplace))
                 {
-                    return url.replace(urlToReplace, replaceUrl);
+                    return url.replace(urlToReplace, newUrl);
                 }
             }
 
@@ -558,20 +559,7 @@ export class DataController
                     continue;
                 }
 
-                manhwa.Url = ReplaceUrl(manhwa.Url, urls, asuraUrl);
-
-                if (manhwa.Url.startsWith("https://asuracomic.net/manga/"))
-                {
-                    // Remove old id from the url
-                    const urlParts = manhwa.Url.split("/");
-
-                    if (urlParts.length < 5) continue;
-
-                    const id = urlParts[4].split("-")[0];
-
-                    manhwa.Url = manhwa.Url.replace("https://asuracomic.net/manga/" + id + "-", "https://asuracomic.net/series/");
-                    manhwa.Url = manhwa.Url.replace(manhwa.Url.split("/")[4], manhwa.Url.split("/")[4] + "-12345678");
-                }
+                manhwa.Url = ReplaceUrl(manhwa.Url, oldAsuraUrls, newAsuraUrl);
             }
         }
 
@@ -1399,66 +1387,48 @@ export class DataController
     {
         if (!manhwas) return;
 
-        const isSameManhwa = (url1, url2) =>
+        const id = manhwas[0].id;
+
+        const replaceId = (url) =>
         {
-            const url1Split = url1.split("/")[4].split("-");
-            const url2Split = url2.split("/")[4].split("-");
+            const oldId = url.split("/")[4].split("-").pop();
 
-            for (let i = 0; i < url1Split.length - 1; i++)
-            {
-                if (url1Split[i] !== url2Split[i]) return false;
-            }
-
-            return true;
+            return url.replace(oldId, id);
         }
+        const isAsuraManhwa = (url) => url.startsWith("https://asurascans.com/comics/");
 
-        for (let manhwa of manhwas)
+        try
         {
-            if (manhwa.url === "") continue;
-            if (manhwa.id.length !== 8) continue;
-
-            const namePart = manhwa.url.split("/")[4];
-
-            try
+            for (let userID in this._users)
             {
-                for (let userID in this._users)
+                const user = this._users[userID];
+
+                for (let userManhwa of user.Manhwas)
                 {
-                    const user = this._users[userID];
+                    if (!isAsuraManhwa(userManhwa.Url)) continue;
 
-                    for (let userManhwa of user.Manhwas)
+                    userManhwa.Url = replaceId(userManhwa.Url);
+
+                    for (let chapter of user.UnreadChapters)
                     {
-                        if (!isSameManhwa(userManhwa.Url, manhwa.url)) continue;
-
-                        userManhwa.Url = userManhwa.Url.replace(userManhwa.Url.split("/")[4], namePart);
-
-                        for (let chapter of user.UnreadChapters)
-                        {
-                            if (isSameManhwa(chapter.Url, manhwa.url))
-                            {
-                                chapter.Url = chapter.Url.replace(chapter.Url.split("/")[4], namePart);
-                            }
-                        }
-
-                        break;
-                    }
-                }
-
-                for (let serverID in this._servers)
-                {
-                    const server = this._servers[serverID];
-
-                    for (let serverManhwa of server.Manhwas)
-                    {
-                        if (!isSameManhwa(serverManhwa.Url, manhwa.url)) continue;
-
-                        serverManhwa.Url = serverManhwa.Url.replace(serverManhwa.Url.split("/")[4], namePart);
-
-                        break;
+                        chapter.Url = replaceId(chapter.Url);
                     }
                 }
             }
-            catch (e) {}
+
+            for (let serverID in this._servers)
+            {
+                const server = this._servers[serverID];
+
+                for (let serverManhwa of server.Manhwas)
+                {
+                    if (!isAsuraManhwa(serverManhwa.Url)) continue;
+
+                    serverManhwa.Url = replaceId(serverManhwa.Url);
+                }
+            }
         }
+        catch (e) {}
     }
 
     /**
@@ -1545,7 +1515,7 @@ export class DataController
 
                 const loadTime = ManhwaNotifier.LoadTimePerWebsite[websiteName];
 
-                if (loadTime >= ManhwaNotifier.MaxLoadTimeOccurrence && (websiteName !== "Asuracomic" || loadTime >= ManhwaNotifier.MaxLoadTimeOccurrenceAsura))
+                if (loadTime >= ManhwaNotifier.MaxLoadTimeOccurrence && (websiteName !== "Asurascans" || loadTime >= ManhwaNotifier.MaxLoadTimeOccurrenceAsura))
                 {
                     websiteDown = true;
                 }
@@ -2004,7 +1974,7 @@ export class DataController
 
         ManhwaNotifier.LastCheckStep = "Check ids";
 
-        await this._replaceAllIdFromAsura(await Utils.GetAsuraLastManhwa());
+        this._replaceAllIdFromAsura(await Utils.GetAsuraLastManhwa());
 
         ManhwaNotifier.LastCheckStep = "Begin server check";
 
@@ -2081,8 +2051,8 @@ export class DataController
                 continue;
             }
 
-            // If the user has not been active the last month, don't check
-            if (user.LastActionDate < dateFrom1Month)
+            // If the user has not been active the last month and isn't me, don't check
+            if (user.LastActionDate < dateFrom1Month && !SecurityUtility.IsCreator(userID))
             {
                 ManhwaNotifier.TotalCheckManhwas += manhwas.length;
                 continue;

@@ -6,7 +6,7 @@ import {ScrapInfo} from "../models/datas/ScrapInfo.mjs";
 import {ScrapStatusType} from "../models/ScrapStatusType.mjs";
 
 const SupportedWebsites = [
-    "https://asuracomic.net/series/",
+    "https://asurascans.com/comics/",
     "https://manhuaplus.com/manga/",
     "https://manhwabuddy.com/manhwa/",
     "https://kingofshojo.com/manga/",
@@ -216,7 +216,7 @@ export class Utils
 
     static async OpenNewBrowser()
     {
-        return await puppeteer.launch({
+        return puppeteer.launch({
             headless: true,
             args: [
                 "--no-sandbox",
@@ -226,7 +226,7 @@ export class Utils
                 '--disable-accelerated-2d-canvas',
                 '--no-first-run',
                 '--no-zygote',
-                '--single-process',
+                //'--single-process',
                 '--disable-gpu',
             ],
             timeout: 120000
@@ -325,17 +325,18 @@ export class Utils
      */
     static async GetAsuraLastManhwa()
     {
-        const page = await Utils.getNewPage("https://asuracomic.net/");
+        const url = "https://asurascans.com";
+        const page = await Utils.getNewPage(url);
 
         try
         {
-            await page.goto("https://asuracomic.net/", {waitUntil: "networkidle2", timeout: 30000});
+            await page.goto(url, {waitUntil: "networkidle2", timeout: 30000});
             await page.waitForSelector('body');
 
             const list = await page.evaluate(() =>
             {
                 let list = [];
-                let classes = document.getElementsByClassName("grid grid-rows-1 grid-cols-1 sm:grid-cols-2 bg-[#222222] p-3 pb-0");
+                let classes = document.getElementsByClassName("grid grid-cols-1 md:grid-cols-2 content-start px-4 md:px-8");
 
                 if (classes.length === 0) return list;
 
@@ -410,7 +411,7 @@ export class Utils
                 {
                     response = await page.waitForResponse(() => true, {timeout: 3000}).catch(() => null);
 
-                    if (response === null && !url.includes("asuracomic.net"))
+                    if (response === null && !url.includes("asurascans.com"))
                     {
                         const scrapInfo = new ScrapInfo();
 
@@ -452,8 +453,9 @@ export class Utils
                     // ============ Chapters
                     // Chapters possible to get by class name
                     const chaptersEntryPoints = [
-                        "pl-4 pr-2 pb-4 overflow-y-auto scrollbar-thumb-themecolor scrollbar-track-transparent scrollbar-thin mr-3 max-h-[20rem] space-y-2.5", // Asura
-                        "listing-chapters_wrap", "eplister", "chapter-list", "row-content-chapter", "chapter-li", "EpisodeListList__episode_list--_N3ks"
+                        "divide-y divide-white/5", // Asura
+                        "listing-chapters_wrap cols-1 show-more show", // Manhwaclan
+                        "listing-chapters_wrap", "eplister", "chapter-list", "row-content-chapter", "chapter-li", "EpisodeListList__episode_list--_N3ks",
                     ];
 
                     let listChapters;
@@ -488,7 +490,25 @@ export class Utils
                     const roi = document.getElementById("roi");
                     const roiroi = document.getElementById("roiroi");
 
-                    if (url.includes("bato.to"))
+                    if (url.includes("asura"))
+                    {
+                        const asuraImage = document.getElementsByClassName("max-w-[90vw] max-h-[85vh] object-contain rounded-lg")[0];
+
+                        if (asuraImage)
+                        {
+                            const src = asuraImage.getAttribute("src");
+
+                            if (src.startsWith("http"))
+                            {
+                                scrapInfo.Image = src;
+                            }
+                            else
+                            {
+                                scrapInfo.Image = "https://asurascans.com/comics/" + src;
+                            }
+                        }
+                    }
+                    else if (url.includes("bato.to"))
                     {
                         const div = document.body.firstElementChild.children[2].firstElementChild.firstElementChild.firstElementChild.firstElementChild;
 
@@ -535,38 +555,6 @@ export class Utils
                             }
                         }
                     }
-                    else if (url.includes("reaperscans"))
-                    {
-                        const image = document.getElementsByClassName("p-1 bg-background rounded overflow-hidden");
-
-                        if (image !== undefined && image.length > 0)
-                        {
-                            scrapInfo.Image = image[0].getAttribute("src");
-
-                            if (scrapInfo.Image.startsWith("/"))
-                            {
-                                scrapInfo.Image = "https://reaperscans.com" + scrapInfo.Image;
-                            }
-                        }
-                    }
-                    else if (url.includes("asura"))
-                    {
-                        const asuraImage = document.getElementsByClassName("rounded mx-auto md:mx-0")[0];
-
-                        if (asuraImage)
-                        {
-                            const src = asuraImage.getAttribute("src");
-
-                            if (src.startsWith("http"))
-                            {
-                                scrapInfo.Image = src;
-                            }
-                            else
-                            {
-                                scrapInfo.Image = "https://asuracomic.net" + src;
-                            }
-                        }
-                    }
 
                     // Description
                     const summaryContent = document.getElementsByClassName("summary__content");
@@ -592,15 +580,6 @@ export class Utils
                     {
                         readManganato[0].removeChild(readManganato[0].firstElementChild);
                         scrapInfo.Description = readManganato[0].textContent;
-                    }
-                    else if (url.includes("reaperscans"))
-                    {
-                        const items = document.getElementsByClassName("col-span-12 h-full self-end bg-background lg:col-span-9 rounded p-4 order-2 lg:order-1 z-10 flex flex-col gap-3");
-
-                        if (items.length > 0 && items[0].children !== undefined && items[0].children.length > 2)
-                        {
-                            scrapInfo.Description = items[0].children[2].firstElementChild.textContent;
-                        }
                     }
                     else if (url.includes("manhwabuddy"))
                     {
@@ -631,7 +610,7 @@ export class Utils
                     }
                     else if (url.includes("asura"))
                     {
-                        const description = document.getElementsByClassName("font-medium text-sm text-[#A2A2A2]")[0];
+                        const description = document.getElementById("description-text");
 
                         if (description)
                         {
@@ -686,22 +665,13 @@ export class Utils
                     }
                     else if (url.includes("asura"))
                     {
-                        const titles = document.querySelector("div.grid-cols-12 div.col-span-12 > div.text-center > span");
+                        const titles = document.getElementsByClassName("text-xl lg:text-[32px] font-semibold leading-tight")[0];
 
                         scrapInfo.Name = titles.textContent;
                     }
                     else if (url.includes("manhwabuddy"))
                     {
                         scrapInfo.Name = document.getElementsByClassName("main-info-title title-bigger")[0].textContent;
-                    }
-                    else if (url.includes("reaperscans"))
-                    {
-                        const items = document.getElementsByClassName("col-span-12 h-full self-end bg-background lg:col-span-9 rounded p-4 order-2 lg:order-1 z-10 flex flex-col gap-3");
-
-                        if (items.length > 0)
-                        {
-                            scrapInfo.Name = items[0].firstElementChild.firstElementChild.firstElementChild.textContent;
-                        }
                     }
                     else if (url.includes("bato.to"))
                     {

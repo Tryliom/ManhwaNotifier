@@ -29,7 +29,6 @@ export class User
     /** @type {boolean} */
     HasShownUnreadAlert = false
 
-
     constructor()
     {
         this.Manhwas = [];
