@@ -119,15 +119,71 @@ export class ManhwaNotifier
             }
             else
             {
+                let foundEvent = false;
+
                 for (let i = 0; i < this._events.length; i++)
                 {
                     try
                     {
-                        await this._events[i].event(interaction);
+                        if (await this._events[i].event(interaction))
+                        {
+                            foundEvent = true;
+                        }
                     }
                     catch (error)
                     {
                         Logger.Log(error);
+                    }
+                }
+                
+                if (!foundEvent)
+                {
+                    // Can be a message posted before the bot start, so we need to find the command used and refresh it
+                    try
+                    {
+                        const embeds = interaction.message?.embeds;
+                        let commandName = null;
+
+                        if (embeds && embeds.length > 0)
+                        {
+                            const footerText = embeds[0].footer?.text || "";
+                            const cmdMatch = footerText.match(/\u200b([\w-]+)$/);
+
+                            if (cmdMatch) commandName = cmdMatch[1];
+                        }
+
+                        if (commandName)
+                        {
+                            const command = this.CommandCenter.Commands.find(c => c.Name === commandName);
+
+                            if (command)
+                            {
+                                try
+                                {
+                                    this.CommandCenter.CurrentCommand = commandName;
+                                    await command.Run(interaction);
+                                    return;
+                                }
+                                catch (e)
+                                {
+                                    Logger.Log(`OrphanedInteraction re-run failed for /${commandName}`, e);
+                                }
+                                finally
+                                {
+                                    this.CommandCenter.CurrentCommand = null;
+                                }
+                            }
+                        }
+
+                        // Fallback: notify the user and delete the message
+                        try { await interaction.reply({ embeds: [EmbedUtility.GetWarningEmbedMessage("Session expired", `This menu has expired.\nPlease use the command again.`)], ephemeral: true }); }
+                        catch (e) {}
+
+                        setTimeout(async () => { try { await interaction.message?.delete(); } catch (e) {} }, 3000);
+                    }
+                    catch (error)
+                    {
+                        Logger.Log("OrphanedInteraction", error);
                     }
                 }
             }

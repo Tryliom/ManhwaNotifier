@@ -115,6 +115,8 @@ export class CommandInterface
     _threads = []
     /** @type {string} */
     _filter = ""
+    /** @type {string} */
+    _commandName = ""
 
     /** @type {Object<string, number>} */
     _menus = {}
@@ -142,6 +144,7 @@ export class CommandInterface
         this.IgnoreInteractions = false;
 
         this._id = v4();
+        this._commandName = ManhwaNotifier.Instance?.CommandCenter?.CurrentCommand || "";
     }
 
     SetLastInteraction(interaction)
@@ -176,13 +179,18 @@ export class CommandInterface
 
             return isUser && isCorrectMessage;
         };
+        // Return a bool if the message is corresponding to the interaction
         this._collector = async (interaction) =>
         {
-            if (!filter(interaction)) return;
+            const isUser = interaction.user.id === this.Interaction.user.id || interaction.user.id === process.env.creatorId;
+            const isCorrectMessage = interaction.message.id === this._messageId;
+
+            if (!isCorrectMessage) return false;
+            if (!isUser) return true;
 
             this.LastInteraction = interaction;
 
-            if (this.IgnoreInteractions) return;
+            if (this.IgnoreInteractions) return true;
 
             if (interaction.isButton()) await this.OnButtonClick(interaction);
             else if (interaction.isAnySelectMenu()) await this.OnMenuClick(interaction);
@@ -271,7 +279,26 @@ export class CommandInterface
      */
     GetContent(content = null)
     {
-        return EmbedUtility.FormatMessageContent(content || {embeds: this.ConstructEmbed(), components: this.ConstructComponents()});
+        const formatted = EmbedUtility.FormatMessageContent(content || {embeds: this.ConstructEmbed(), components: this.ConstructComponents()});
+
+        if (this._commandName && formatted.embeds && formatted.embeds.length > 0)
+        {
+            const embed = formatted.embeds[0];
+
+            if (embed instanceof EmbedBuilder)
+            {
+                const existingText = embed.data?.footer?.text || "";
+                const existingIcon = embed.data?.footer?.icon_url;
+                const cmdTag = `\u200b${this._commandName}`;
+
+                embed.setFooter({
+                    text: existingText ? `${existingText} ${cmdTag}` : cmdTag,
+                    ...(existingIcon ? { icon_url: existingIcon } : {})
+                });
+            }
+        }
+
+        return formatted;
     }
 
     /**

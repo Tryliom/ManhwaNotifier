@@ -44,6 +44,8 @@ export class CommandController
 {
     /** @type {Command[]} */
     Commands
+    /** @type {string | null} */
+    CurrentCommand = null
 
     Initialize()
     {
@@ -109,6 +111,7 @@ export class CommandController
             }
             else
             {
+                this.CurrentCommand = command.Name;
                 try
                 {
                     await command.Run(interaction);
@@ -121,6 +124,10 @@ export class CommandController
                     ));
 
                     console.error(e);
+                }
+                finally
+                {
+                    this.CurrentCommand = null;
                 }
             }
         }
