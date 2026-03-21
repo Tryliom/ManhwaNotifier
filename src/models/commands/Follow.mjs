@@ -161,7 +161,7 @@ export class Follow extends Command
         // ============ Replace if already exists
         if (matchType === MatchType.Partial)
         {
-            await new ReplaceManhwa(interaction, scrapInfo).Start();
+            await new ReplaceManhwa(interaction, scrapInfo).SetCommandName(this.Name).Start();
             return;
         }
         else if (matchType === MatchType.Full)
@@ -179,7 +179,7 @@ export class Follow extends Command
 
             if (!chooseChapter)
             {
-                await new ChapterSelector(interaction, scrapInfo).Start();
+                await new ChapterSelector(interaction, scrapInfo).SetCommandName(this.Name).Start();
                 return;
             }
 
@@ -221,7 +221,7 @@ export class Follow extends Command
 
         if (matchType === MatchType.Partial)
         {
-            await new ReplaceManhwa(interaction, infos).Start();
+            await new ReplaceManhwa(interaction, infos).SetCommandName(this.Name).Start();
             return;
         }
 

@@ -34,7 +34,7 @@ export class Get extends Command
 
         const title = interaction.options.get("name").value;
 
-        await new Searcher(interaction, Utils.formatTitle(title)).Start();
+        await new Searcher(interaction, Utils.formatTitle(title)).SetCommandName(this.Name).Start();
     }
 }
 
@@ -78,7 +78,7 @@ class Searcher extends CommandInterface
                     if (matchType !== MatchType.Not)
                     {
                         this.IgnoreInteractions = true;
-                        await new ReplaceManhwa(this.Interaction, scrapInfo, this.LastInteraction).Start();
+                        await new ReplaceManhwa(this.Interaction, scrapInfo, this.LastInteraction).SetCommandName(this._commandName).Start();
                     }
                     else
                     {

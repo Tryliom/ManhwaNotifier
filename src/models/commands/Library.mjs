@@ -27,7 +27,7 @@ export class Library extends Command
     {
         await super.Run(interaction);
 
-        await new LibraryInterface(interaction).Start();
+        await new LibraryInterface(interaction).SetCommandName(this.Name).Start();
     }
 }
 

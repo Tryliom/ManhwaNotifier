@@ -21,7 +21,7 @@ export class Panel extends Command
     {
         await super.Run(interaction);
 
-        await new PanelInterface(interaction).Start();
+        await new PanelInterface(interaction).SetCommandName(this.Name).Start();
     }
 }
 
@@ -48,7 +48,7 @@ class PanelInterface extends CommandInterface
                     this.LastInteraction = lastInteraction;
                     await this.UpdateMsg();
                 }
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
 
         if (interaction.customId === "channel-manager")
@@ -60,7 +60,7 @@ class PanelInterface extends CommandInterface
                     this.LastInteraction = lastInteraction;
                     await this.UpdateMsg();
                 }
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
 
         if (interaction.customId === "servers")
@@ -72,7 +72,7 @@ class PanelInterface extends CommandInterface
                     this.LastInteraction = lastInteraction;
                     await this.UpdateMsg();
                 }
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
 
         if (interaction.customId === "restart")
@@ -276,7 +276,7 @@ class PanelInterface extends CommandInterface
     ConstructEmbed()
     {
         const stats = ManhwaNotifier.Instance.DataCenter.GetBotStats();
-        const embed = EmbedUtility.GetNeutralEmbedMessage("Admin panel");
+        const embed = EmbedUtility.GetNeutralEmbedMessage(this.GetFormattedCommandName());
 
         stats.AddToEmbed(embed);
 

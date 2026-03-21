@@ -20,6 +20,8 @@ export class ManhwaNotifier
 
     /** @type {Object<string, Function>[]} */
     _events = []
+    /** @type {string[]} */
+    _activeMessageIds = []
 
     // Checks
     /** @type {string} */
@@ -119,26 +121,23 @@ export class ManhwaNotifier
             }
             else
             {
-                let foundEvent = false;
-
-                for (let i = 0; i < this._events.length; i++)
+                if (this._activeMessageIds.includes(interaction.message.id.toString()))
                 {
-                    try
+                    for (let i = 0; i < this._events.length; i++)
                     {
-                        if (await this._events[i].event(interaction))
+                        try
                         {
-                            foundEvent = true;
+                            this._events[i].event(interaction);
+                        }
+                        catch (error)
+                        {
+                            Logger.Log(error);
                         }
                     }
-                    catch (error)
-                    {
-                        Logger.Log(error);
-                    }
                 }
-                
-                if (!foundEvent)
+                else
                 {
-                    // Can be a message posted before the bot start, so we need to find the command used and refresh it
+                    // Can be a message from an active session that lost its collector
                     try
                     {
                         const embeds = interaction.message?.embeds;
@@ -146,10 +145,10 @@ export class ManhwaNotifier
 
                         if (embeds && embeds.length > 0)
                         {
-                            const footerText = embeds[0].footer?.text || "";
-                            const cmdMatch = footerText.match(/\u200b([\w-]+)$/);
+                            const titleText = embeds[0].title?.text || "";
+                            const cmdMatch = titleText.split("\u200b");
 
-                            if (cmdMatch) commandName = cmdMatch[1];
+                            if (cmdMatch.length > 0) commandName = cmdMatch[0].toLowerCase();
                         }
 
                         if (commandName)
@@ -160,17 +159,12 @@ export class ManhwaNotifier
                             {
                                 try
                                 {
-                                    this.CommandCenter.CurrentCommand = commandName;
                                     await command.Run(interaction);
                                     return;
                                 }
                                 catch (e)
                                 {
                                     Logger.Log(`OrphanedInteraction re-run failed for /${commandName}`, e);
-                                }
-                                finally
-                                {
-                                    this.CommandCenter.CurrentCommand = null;
                                 }
                             }
                         }
@@ -205,6 +199,20 @@ export class ManhwaNotifier
                 return;
             }
         }
+    }
+
+    RegisterMessageId(messageId)
+    {
+        const id = messageId.toString();
+
+        if (this._activeMessageIds.includes(id)) return;
+
+        this._activeMessageIds.push(id);
+    }
+
+    UnregisterMessageId(messageId)
+    {
+        this._activeMessageIds = this._activeMessageIds.filter(id => id !== messageId);
     }
 
     // Functions

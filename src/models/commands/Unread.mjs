@@ -43,13 +43,13 @@ export class Unread extends Command
     {
         await super.Run(interaction);
 
-        if (ManhwaNotifier.Instance.DataCenter.IsUserUnreadChaptersEmpty(interaction.user.id))
+        /*if (ManhwaNotifier.Instance.DataCenter.IsUserUnreadChaptersEmpty(interaction.user.id))
         {
             await interaction.reply({embeds: [EmbedUtility.GetNeutralEmbedMessage("You don't have any unread chapters")], ephemeral: interaction.guild !== null});
             return;
-        }
+        }*/
 
-        await new UnreadViewer(interaction).Start();
+        await new UnreadViewer(interaction).SetCommandName(this.Name).Start();
     }
 }
 
@@ -133,7 +133,7 @@ class UnreadViewer extends CommandInterface
 
         if (Object.keys(this._unreadChapters).length === 0)
         {
-            return EmbedUtility.GetNeutralEmbedMessage("You don't have chapter to read");
+            return EmbedUtility.GetNeutralEmbedMessage(this.GetFormattedCommandName(), "You don't have chapter to read");
         }
         else
         {

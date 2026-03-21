@@ -66,7 +66,7 @@ export class EmbedUtility
 
     static GetClosedEmbedMessage()
     {
-        return EmbedUtility.GetGenericEmbedMessage("#6b858e", "Closed", "This menu has been closed");
+        return EmbedUtility.GetGenericEmbedMessage("#6b858e", "Closed", "This menu has been closed, this message will be deleted automatically in 5 seconds..");
     }
 
     /**

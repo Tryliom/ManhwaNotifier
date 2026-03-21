@@ -20,7 +20,7 @@ export class Settings extends Command
     {
         await super.Run(interaction);
 
-        await new SettingsInterface(interaction, this._manhwaNotifier).Start();
+        await new SettingsInterface(interaction, this._manhwaNotifier).SetCommandName(this.Name).Start();
     }
 }
 
@@ -66,7 +66,7 @@ class SettingsInterface extends CommandInterface
 
     ConstructEmbed()
     {
-        const embed = EmbedUtility.GetGoodEmbedMessage("Settings");
+        const embed = EmbedUtility.GetGoodEmbedMessage(this.GetFormattedCommandName());
 
         ManhwaNotifier.Instance.DataCenter.GetUser(this.Interaction.user.id).AddToEmbed(embed);
 

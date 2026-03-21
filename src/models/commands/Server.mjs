@@ -115,7 +115,7 @@ export class Server extends Command
         {
             try
             {
-                await new ServerInterface(interaction).Start();
+                await new ServerInterface(interaction).SetCommandName(this.Name).Start();
             }
             catch (e)
             {
@@ -158,7 +158,7 @@ class ServerInterface extends CommandInterface
                     this.LastInteraction = lastInteraction;
                     await this.UpdateMsg();
                 }
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
 
         if (interaction.customId === "change-roles")
@@ -170,7 +170,7 @@ class ServerInterface extends CommandInterface
                     this.LastInteraction = lastInteraction;
                     await this.UpdateMsg();
                 }
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
 
         if (interaction.customId === "change-admins")
@@ -182,7 +182,7 @@ class ServerInterface extends CommandInterface
                     this.LastInteraction = lastInteraction;
                     await this.UpdateMsg();
                 }
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
 
         if (interaction.customId === "start")
@@ -222,7 +222,7 @@ class ServerInterface extends CommandInterface
                 dataCenter.GetServerManhwas(interaction.guild.id),
                 "your manhwas",
                 `${this.Interaction.guild.name} manhwas`
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
 
         if (interaction.customId === "export")
@@ -238,7 +238,7 @@ class ServerInterface extends CommandInterface
                 dataCenter.GetUserManhwas(interaction.user.id),
                 `${this.Interaction.guild.name} manhwas`,
                 "your manhwas"
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
 
         if (interaction.customId === "test")
@@ -302,7 +302,7 @@ class ServerInterface extends CommandInterface
     {
         const dataCenter = ManhwaNotifier.Instance.DataCenter;
         const serverId = this.Interaction.guild.id;
-        const embed = EmbedUtility.GetNeutralEmbedMessage("Server Manager - Overview");
+        const embed = EmbedUtility.GetNeutralEmbedMessage("Overview");
 
         if (dataCenter.ExistsServer(serverId) && !dataCenter.CanManagerServerManhwas(this.Interaction.user.id, serverId) ||
             !dataCenter.ExistsServer(serverId) && !DiscordUtility.IsAdministrator(this.Interaction.user.id, serverId))
@@ -515,7 +515,7 @@ class AdminManager extends CommandInterface
         }
 
         const server = this._dataController.GetServer(this.Interaction.guild.id);
-        const embed = EmbedUtility.GetNeutralEmbedMessage("Server Manager - Admin Manager");
+        const embed = EmbedUtility.GetNeutralEmbedMessage("Admin Manager");
 
         embed.setDescription(
             `You can add or remove admins to the server. People with admin rights can manage the server without the need to add them to admins.\n` +
@@ -616,7 +616,7 @@ class ChannelManager extends CommandInterface
         }
 
         const server = this._dataController.GetServer(this.Interaction.guild.id);
-        const embed = EmbedUtility.GetNeutralEmbedMessage("Server Manager - Channel Manager");
+        const embed = EmbedUtility.GetNeutralEmbedMessage("Channel Manager");
 
         server.AddChannelToEmbed(embed);
 
@@ -748,7 +748,7 @@ class RoleManager extends CommandInterface
         }
 
         const server = this._dataController.GetServer(this.Interaction.guild.id);
-        const embed = EmbedUtility.GetNeutralEmbedMessage("Server Manager - Role Manager");
+        const embed = EmbedUtility.GetNeutralEmbedMessage("Role Manager");
 
         if (this._manhwaIndex === -1)
         {

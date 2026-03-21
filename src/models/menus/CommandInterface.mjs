@@ -144,7 +144,13 @@ export class CommandInterface
         this.IgnoreInteractions = false;
 
         this._id = v4();
-        this._commandName = ManhwaNotifier.Instance?.CommandCenter?.CurrentCommand || "";
+        this._commandName = "";
+    }
+
+    SetCommandName(name)
+    {
+        this._commandName = name;
+        return this;
     }
 
     SetLastInteraction(interaction)
@@ -182,15 +188,11 @@ export class CommandInterface
         // Return a bool if the message is corresponding to the interaction
         this._collector = async (interaction) =>
         {
-            const isUser = interaction.user.id === this.Interaction.user.id || interaction.user.id === process.env.creatorId;
-            const isCorrectMessage = interaction.message.id === this._messageId;
-
-            if (!isCorrectMessage) return false;
-            if (!isUser) return true;
+            if (!filter(interaction)) return;
 
             this.LastInteraction = interaction;
 
-            if (this.IgnoreInteractions) return true;
+            if (this.IgnoreInteractions) return;
 
             if (interaction.isButton()) await this.OnButtonClick(interaction);
             else if (interaction.isAnySelectMenu()) await this.OnMenuClick(interaction);
@@ -219,6 +221,7 @@ export class CommandInterface
 
         this._messageId = (await interaction.fetchReply()).id;
 
+        ManhwaNotifier.Instance.RegisterMessageId(this._messageId);
         ManhwaNotifier.Instance.SubscribeToEvent(this._id, this._collector);
 
         this._threads.push(setTimeout(() => this.StopCollector(), CollectorTime));
@@ -251,13 +254,11 @@ export class CommandInterface
 
         if (this.Error !== "")
         {
-            content = EmbedUtility.GetBadEmbedMessage("An error occurred")
-                .setDescription(`${this.Error}\n\nYou will return to the menu after 5sec`);
+            content = EmbedUtility.GetBadEmbedMessage("An error occurred").setDescription(`${this.Error}\n\nYou will return to the menu after 5sec`);
         }
         else if (this.ConfirmationMessage !== "")
         {
-            content = EmbedUtility.GetGoodEmbedMessage("Confirmation")
-                .setDescription(`${this.ConfirmationMessage}\n\nYou will return to the menu after 5sec`);
+            content = EmbedUtility.GetGoodEmbedMessage("Confirmation").setDescription(`${this.ConfirmationMessage}\n\nYou will return to the menu after 5sec`);
         }
 
         if (!this._closed) await DiscordUtility.Reply(interaction, this.GetContent(content), this.Ephemeral);
@@ -287,14 +288,14 @@ export class CommandInterface
 
             if (embed instanceof EmbedBuilder)
             {
-                const existingText = embed.data?.footer?.text || "";
-                const existingIcon = embed.data?.footer?.icon_url;
-                const cmdTag = `\u200b${this._commandName}`;
+                let title = StringUtility.UppercaseFirstChar(this._commandName) + "\u200b";
 
-                embed.setFooter({
-                    text: existingText ? `${existingText} ${cmdTag}` : cmdTag,
-                    ...(existingIcon ? { icon_url: existingIcon } : {})
-                });
+                if (embed.data.title !== title)
+                {
+                    title += ` - ${embed.data.title}`;
+                }
+
+                embed.setTitle(`${title}`);
             }
         }
 
@@ -375,6 +376,7 @@ export class CommandInterface
         {
             await this.UpdateMsg(EmbedUtility.GetClosedEmbedMessage());
             setTimeout(() => (this.LastInteraction || this.Interaction).deleteReply(), 5000);
+            ManhwaNotifier.Instance.UnregisterMessageId(this._messageId);
         }
         else if (!doNotUpdate)
         {
@@ -674,5 +676,10 @@ export class CommandInterface
             this.ConfirmationMessage = "";
             this.UpdateMsg();
         }, 5000);
+    }
+
+    GetFormattedCommandName()
+    {
+        return StringUtility.UppercaseFirstChar(this._commandName) + "\u200b";
     }
 }

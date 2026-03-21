@@ -31,7 +31,7 @@ export class Manhwas extends Command
     {
         await super.Run(interaction);
 
-        await new ManhwasInterface(interaction).Start();
+        await new ManhwasInterface(interaction).SetCommandName(this.Name).Start();
     }
 }
 
@@ -62,7 +62,7 @@ class ManhwasInterface extends CommandInterface
                     this.LastInteraction = lastInteraction;
                     await this.UpdateMsg();
                 }
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
 
         if (interaction.customId === "manage")
@@ -74,7 +74,7 @@ class ManhwasInterface extends CommandInterface
                     this.LastInteraction = lastInteraction;
                     await this.UpdateMsg();
                 }
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
 
         if (interaction.customId === "codes")
@@ -86,7 +86,7 @@ class ManhwasInterface extends CommandInterface
                     this.LastInteraction = lastInteraction;
                     await this.UpdateMsg();
                 }
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
     }
 
@@ -95,7 +95,7 @@ class ManhwasInterface extends CommandInterface
         const dataCenter = ManhwaNotifier.Instance.DataCenter;
         const manhwasCount = this._affectServerManhwas ? dataCenter.GetServerManhwasCount(this.Interaction.guild.id) : dataCenter.GetUserManhwasCount(this.Interaction.user.id);
 
-        const embed = EmbedUtility.GetNeutralEmbedMessage("Manhwas Manager");
+        const embed = EmbedUtility.GetNeutralEmbedMessage("Overview");
 
         embed.setDescription(`You have ${manhwasCount} manhwas in your list`);
 
@@ -370,7 +370,7 @@ class CodesInterface extends CommandInterface
                 from, to,
                 "code [" + code + "]", "your manhwas",
                 !this._affectServerManhwas ? this.Interaction.user.id : "", unreadList
-            ).Start();
+            ).SetCommandName(this._commandName).Start();
         }
     }
 
@@ -378,7 +378,7 @@ class CodesInterface extends CommandInterface
     {
         const dataCenter = ManhwaNotifier.Instance.DataCenter;
         const codes = this._affectServerManhwas ? dataCenter.GetServerCodes(this.Interaction.guild.id) : dataCenter.GetUserCodes(this.Interaction.user.id);
-        const embed = EmbedUtility.GetNeutralEmbedMessage("Manhwas Manager - Codes");
+        const embed = EmbedUtility.GetNeutralEmbedMessage("Codes");
 
         embed.setDescription(`Codes are used to share your manhwas list with others.\nMax ${Code.MaxLength} characters and use only letters and numbers.`);
 
@@ -573,7 +573,7 @@ class ListManhwasInterface extends CommandInterface
 
         if (manhwas.length === 0) description = "Your list is empty";
 
-        return EmbedUtility.GetGoodEmbedMessage(`Manhwas Manager - List (${manhwas.length})`)
+        return EmbedUtility.GetGoodEmbedMessage(`List (${manhwas.length})`)
             .setDescription(description)
             .setFooter({text: `Page ${this.page + 1}/${maxPage === 0 ? 1 : maxPage}`});
     }
@@ -912,7 +912,7 @@ class ManageListInterface extends CommandInterface
 
     ConstructEmbed()
     {
-        const embed = EmbedUtility.GetGoodEmbedMessage("Manhwa Manager - Manage");
+        const embed = EmbedUtility.GetGoodEmbedMessage("Manage");
         const manhwasCount = this.GetManhwaCount();
 
         if (manhwasCount === 0)
