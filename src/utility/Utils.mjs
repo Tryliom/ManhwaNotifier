@@ -492,7 +492,7 @@ export class Utils
 
                     if (url.includes("asura"))
                     {
-                        const asuraImage = document.getElementsByClassName("max-w-[90vw] max-h-[85vh] object-contain rounded-lg")[0];
+                        const asuraImage = document.getElementsByClassName("rounded-xl z-0 w-full h-full absolute top-0 left-0")[0].children[0];
 
                         if (asuraImage)
                         {
