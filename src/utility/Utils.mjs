@@ -12,7 +12,8 @@ const SupportedWebsites = [
     "https://kingofshojo.com/manga/",
     "https://toonclash.com/manga/",
     "https://mangabuddy.com/",
-    "https://arenascan.com/manga/"
+    "https://arenascan.com/manga/",
+    "https://comix.to/title/"
 ];
 
 const titleFormat = /[\[\]',.’`?!()\n&:\/\\]/g;
@@ -407,6 +408,11 @@ export class Utils
             {
                 let response = await page.goto(url, {waitUntil: waitUntil, timeout: 30000}).catch((reason) => console.log(reason));
 
+                if (url.includes("comix.to"))
+                {
+                    await page.waitForSelector(".chap-list a", { timeout: 30000 });
+                }
+
                 if (response === null)
                 {
                     response = await page.waitForResponse(() => true, {timeout: 3000}).catch(() => null);
@@ -437,7 +443,7 @@ export class Utils
                 {
                     const SearchHref = (node, list) =>
                     {
-                        if (node.href && !list.includes(node.href) && !node.className.includes("dload") && (!node.rel || !node.rel.includes("noreferrer noopener")))
+                        if (node.href && !list.includes(node.href) && !node.className.includes("dload") && !node.className.includes("meta__group") && (!node.rel || !node.rel.includes("noreferrer noopener")))
                         {
                             list.push(node.href);
                         }
@@ -455,6 +461,7 @@ export class Utils
                     const chaptersEntryPoints = [
                         "divide-y divide-white/5", // Asura
                         "listing-chapters_wrap cols-1 show-more show", // Manhwaclan
+                        "chap-list", // comix.to
                         "listing-chapters_wrap", "eplister", "chapter-list", "row-content-chapter", "chapter-li", "EpisodeListList__episode_list--_N3ks",
                     ];
 
@@ -515,6 +522,15 @@ export class Utils
                         if (div)
                         {
                             scrapInfo.Image = div.getAttribute("src");
+                        }
+                    }
+                    else if (url.includes("comix.to"))
+                    {
+                        const div = document.getElementsByClassName("poster");
+
+                        if (div.length > 0)
+                        {
+                            scrapInfo.Image = div[0].firstElementChild.firstElementChild.getAttribute("src");
                         }
                     }
                     else if (roiroi)
@@ -652,7 +668,7 @@ export class Utils
                     {
                         scrapInfo.Name = document.getElementsByClassName("post-type-header-inner")[0].children[3].textContent;
                     }
-                    else if (url.includes("flamecomics") || url.includes("radiantscans") || url.includes("arenascan"))
+                    else if (url.includes("flamecomics") || url.includes("radiantscans") || url.includes("arenascan") || url.includes("comix.to"))
                     {
                         if (document.getElementsByClassName("entry-title").length > 0)
                         {
@@ -740,6 +756,25 @@ export class Utils
                 else
                 {
                     scrapInfo.FinalUrl = url;
+                }
+
+                if (url.includes("comix.to"))
+                {
+                    // Keep only the last URL for each chapter name (dedup by chapter number)
+                    const seen = new Set();
+
+                    scrapInfo.ChaptersUrls = scrapInfo.ChaptersUrls.reduceRight((acc, url) =>
+                    {
+                        const chapterName = this.formatChapterFromURL(url);
+
+                        if (!seen.has(chapterName))
+                        {
+                            seen.add(chapterName);
+                            acc.unshift(url);
+                        }
+
+                        return acc;
+                    }, []);
                 }
 
                 scrapInfo.FinalClean();
@@ -927,6 +962,13 @@ export class Utils
                 let chapter = url.split("/")[6].replace("-VA54", "");
 
                 list = chapter.split("-");
+            }
+            else if (url.includes("comix.to"))
+            {
+                const parts = url.split("/");
+
+                list = parts[parts.length - 1].split("-");
+                list.splice(0, 1);
             }
             else
             {

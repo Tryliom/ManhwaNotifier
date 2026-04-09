@@ -145,7 +145,7 @@ export class ManhwaNotifier
 
                         if (embeds && embeds.length > 0)
                         {
-                            const titleText = embeds[0].title?.text || "";
+                            const titleText = embeds[0].title || "";
                             const cmdMatch = titleText.split("\u200b");
 
                             if (cmdMatch.length > 0) commandName = cmdMatch[0].toLowerCase();

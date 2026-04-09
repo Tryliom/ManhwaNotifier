@@ -201,7 +201,7 @@ export class CommandInterface
 
             if (this._modalSubmit)
             {
-                const submit = await this.LastInteraction.awaitModalSubmit({time: CollectorTime / 4, filter: filter});
+                const submit = await this.LastInteraction.awaitModalSubmit({time: CollectorTime, filter: filter});
 
                 if (submit)
                 {
@@ -228,6 +228,7 @@ export class CommandInterface
         this._threads.push(setInterval(async () =>
         {
             const interaction = this.LastInteraction || this.Interaction;
+
             try
             {
                 await interaction.fetchReply();
@@ -235,6 +236,7 @@ export class CommandInterface
             catch (error)
             {
                 await this.StopCollector(false, true);
+                ManhwaNotifier.Instance.UnregisterMessageId(this._messageId);
             }
         }, 1000 * 60));
     }
