@@ -411,6 +411,7 @@ export class Utils
                 if (url.includes("comix.to"))
                 {
                     await page.waitForSelector(".chap-list a", { timeout: 30000 });
+                    await page.waitForTimeout(1000); // For security
                 }
 
                 if (response === null)
