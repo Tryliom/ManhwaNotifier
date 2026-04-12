@@ -1379,6 +1379,16 @@ export class DataController
         return stats;
     }
 
+    IncreaseCommandUse(commandName)
+    {
+        if (!this._botInfos.CommandsUsed[commandName])
+        {
+            this._botInfos.CommandsUsed[commandName] = 0;
+        }
+
+        this._botInfos.CommandsUsed[commandName]++;
+    }
+
     /**
      * Replace all ids from asura manhwas
      * @param manhwas {[{url: string, id: string}]}
@@ -2165,6 +2175,27 @@ export class DataController
 
     async SendChangelogToAll(version, content)
     {
+        if (this._botInfos.ChangelogChannel.IsDefined())
+        {
+            // Then, send it in bot info changelog channel
+            const channel = DiscordUtility.GetChannel(this._botInfos.ChangelogChannel.Id);
+
+            try
+            {
+                channel.send({embeds: [embed]});
+            }
+            catch (e)
+            {
+                if (`${e}`.startsWith("DiscordAPIError"))
+                {
+                    const embed = EmbedUtility.GetWarningEmbedMessage("Discord API Error", "The bot doesn't have the permission to send messages in the channel or doesn't see it\n" +
+                        `\`${e}\``);
+
+                    await Logger.LogEmbed(embed);
+                }
+            }
+        }
+
         const embed = EmbedUtility.GetNeutralEmbedMessage(`📰 ${version}`, content);
 
         embed.setFooter({text: "If you want to disable this message, use the command `/Settings` to disable the changelog"});
@@ -2185,28 +2216,6 @@ export class DataController
                 {
                     await this.DeleteUser(userID);
                 }
-            }
-        }
-
-        if (!this._botInfos.ChangelogChannel.IsDefined()) return;
-
-        // Then, send it in bot info changelog channel
-        const channel = DiscordUtility.GetChannel(this._botInfos.ChangelogChannel.Id);
-
-        if (!channel) return;
-
-        try
-        {
-            channel.send({embeds: [embed]});
-        }
-        catch (e)
-        {
-            if (`${e}`.startsWith("DiscordAPIError"))
-            {
-                const embed = EmbedUtility.GetWarningEmbedMessage("Discord API Error", "The bot doesn't have the permission to send messages in the channel or doesn't see it\n" +
-                    `\`${e}\``);
-
-                await Logger.LogEmbed(embed);
             }
         }
     }

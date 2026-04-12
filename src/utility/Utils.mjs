@@ -411,14 +411,13 @@ export class Utils
                 if (url.includes("comix.to"))
                 {
                     await page.waitForSelector(".chap-list a", { timeout: 30000 });
-                    await page.waitForTimeout(1000); // For security
                 }
 
                 if (response === null)
                 {
                     response = await page.waitForResponse(() => true, {timeout: 3000}).catch(() => null);
 
-                    if (response === null && !url.includes("asurascans.com"))
+                    if (response === null && !url.includes("asurascans.com") && !url.includes("comix.to"))
                     {
                         const scrapInfo = new ScrapInfo();
 

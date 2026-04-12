@@ -109,7 +109,8 @@ export class ManhwaNotifier
                     Logger.Log(`Autocomplete`, error);
                 }
             }
-            else if (interaction.isCommand()) {
+            else if (interaction.isCommand())
+            {
                 try
                 {
                     await this.CommandCenter.OnCommand(interaction);

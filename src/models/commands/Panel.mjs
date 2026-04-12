@@ -279,6 +279,7 @@ class PanelInterface extends CommandInterface
         const embed = EmbedUtility.GetNeutralEmbedMessage(this.GetFormattedCommandName());
 
         stats.AddToEmbed(embed);
+        this._dataController._botInfos.AddCommandsToEmbed(embed);
 
         embed.addFields([
             {

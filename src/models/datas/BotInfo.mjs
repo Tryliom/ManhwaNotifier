@@ -17,6 +17,10 @@ export class BotInfo
     /** @type {ChannelId} */
     ChangelogChannel = new ChannelId()
 
+    // Stats
+    /** @type {{String, int}} */
+    CommandsUsed = {};
+
     constructor()
     {
         this.Changelogs = [];
@@ -24,6 +28,7 @@ export class BotInfo
         this.GlobalLogChannel = new ChannelId();
         this.UserLogChannel = new ChannelId();
         this.ChangelogChannel = new ChannelId();
+        this.CommandsUsed = {};
     }
 
     FromJson(data)
@@ -47,6 +52,23 @@ export class BotInfo
         this.UserLogChannel = new ChannelId().FromJson(data.UserLogChannel);
         this.ChangelogChannel = new ChannelId().FromJson(data.ChangelogChannel);
 
+        if (data.CommandsUsed)
+        {
+            this.CommandsUsed = data.CommandsUsed;
+        }
+
         return this;
+    }
+
+    AddCommandsToEmbed(embed)
+    {
+        let commands = [];
+
+        for (const command in this.CommandsUsed)
+        {
+            commands.push(`${command}: ${this.CommandsUsed[command]}`);
+        }
+
+        embed.addFields({ name: 'Commands Used', value: commands.join('\n') || 'No commands used yet' });
     }
 }

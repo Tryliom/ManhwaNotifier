@@ -20,6 +20,7 @@ import {Role} from "../models/commands/Role.mjs";
 import {Library} from "../models/commands/Library.mjs";
 import {Panel} from "../models/commands/Panel.mjs";
 import {Server} from "../models/commands/Server.mjs";
+import {DataController} from "./DataController.mjs";
 
 // Random funny message to display when a user doesn't have the permission to use a creator command
 const creatorErrorRandomMessages =
@@ -112,6 +113,8 @@ export class CommandController
             else
             {
                 this.CurrentCommand = command.Name;
+                ManhwaNotifier.Instance.DataCenter.IncreaseCommandUse(command.Name);
+
                 try
                 {
                     await command.Run(interaction);
