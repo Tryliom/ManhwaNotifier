@@ -164,6 +164,7 @@ export class CustomMenu
 
         this._messageId = (await currentInteraction.fetchReply()).id;
 
+        ManhwaNotifier.Instance.RegisterMessageId(this._messageId);
         ManhwaNotifier.Instance.SubscribeToEvent(this.Id, this.Collector);
 
         this._threads.push(setTimeout(() => this.closeAll(), CollectorTime));
@@ -304,6 +305,7 @@ export class CustomMenu
     async closeAll(close = true)
     {
         ManhwaNotifier.Instance.UnsubscribeFromEvent(this.Id);
+        ManhwaNotifier.Instance.UnregisterMessageId(this._messageId);
         this._closed = true;
         if (close) await DiscordUtility.Reply(this.LastInteraction || this.Interaction, EmbedUtility.GetClosedEmbedMessage());
         setTimeout(() => (this.LastInteraction || this.Interaction).deleteReply(), 5000);
