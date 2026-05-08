@@ -443,7 +443,8 @@ export class Utils
                 {
                     const SearchHref = (node, list) =>
                     {
-                        if (node.href && !list.includes(node.href) && !node.className.includes("dload") && !node.className.includes("meta__group") && (!node.rel || !node.rel.includes("noreferrer noopener")))
+                        if (node.href && !list.includes(node.href) && !node.className.includes("dload") && !node.className.includes("meta__group") && !node.className.includes("mchap-row__group") &&
+                            (!node.rel || !node.rel.includes("noreferrer noopener")))
                         {
                             list.push(node.href);
                         }
