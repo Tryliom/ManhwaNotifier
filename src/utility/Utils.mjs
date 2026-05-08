@@ -410,7 +410,7 @@ export class Utils
 
                 if (url.includes("comix.to"))
                 {
-                    await page.waitForSelector(".chap-list a", { timeout: 30000 });
+                    await page.waitForSelector(".mchap-list a", { timeout: 30000 });
                 }
 
                 if (response === null)
@@ -461,7 +461,7 @@ export class Utils
                     const chaptersEntryPoints = [
                         "divide-y divide-white/5", // Asura
                         "listing-chapters_wrap cols-1 show-more show", // Manhwaclan
-                        "chap-list", // comix.to
+                        "mchap-list", // comix.to
                         "listing-chapters_wrap", "eplister", "chapter-list", "row-content-chapter", "chapter-li", "EpisodeListList__episode_list--_N3ks",
                     ];
 
@@ -530,7 +530,7 @@ export class Utils
 
                         if (div.length > 0)
                         {
-                            scrapInfo.Image = div[0].firstElementChild.firstElementChild.getAttribute("src");
+                            scrapInfo.Image = div[0].firstElementChild.getAttribute("src");
                         }
                     }
                     else if (roiroi)
