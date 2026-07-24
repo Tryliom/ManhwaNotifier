@@ -669,7 +669,7 @@ export class Utils
                     {
                         scrapInfo.Name = document.getElementsByClassName("post-type-header-inner")[0].children[3].textContent;
                     }
-                    else if (url.includes("flamecomics") || url.includes("radiantscans") || url.includes("arenascan") || url.includes("comix.to"))
+                    else if (url.includes("flamecomics") || url.includes("radiantscans") || url.includes("arenascan"))
                     {
                         if (document.getElementsByClassName("entry-title").length > 0)
                         {
@@ -720,6 +720,15 @@ export class Utils
                     else if (url.includes("kingofshojo"))
                     {
                         const title = document.getElementsByClassName("entry-title")[0];
+
+                        if (title)
+                        {
+                            scrapInfo.Name = title.textContent;
+                        }
+                    }
+                    else if (url.includes("comix.to"))
+                    {
+                        const title = document.getElementsByClassName("mpage__title")[0];
 
                         if (title)
                         {
