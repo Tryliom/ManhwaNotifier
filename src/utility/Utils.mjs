@@ -13,7 +13,9 @@ const SupportedWebsites = [
     "https://toonclash.com/manga/",
     "https://mangabuddy.com/",
     "https://arenascan.com/manga/",
-    "https://comix.to/title/"
+    "https://comix.to/title/",
+    "https://roliascan.com/manga/",
+    "https://hivetoons.org/series/"
 ];
 
 const titleFormat = /[\[\]',.’`?!()\n&:\/\\]/g;
@@ -413,6 +415,18 @@ export class Utils
                     await page.waitForSelector(".mchap-list a", { timeout: 30000 });
                 }
 
+                if (url.includes("roliascan"))
+                {
+                    await page.evaluate(() => {
+                        const spans = Array.from(document.querySelectorAll('span.tabs-item__inner'));
+                        const chaptersSpan = spans.find(span => span.textContent.includes('Chapters'));
+                        if (chaptersSpan) {
+                            chaptersSpan.click();
+                        }
+                    });
+                    await page.waitForTimeout(1000);
+                }
+
                 if (response === null)
                 {
                     response = await page.waitForResponse(() => true, {timeout: 3000}).catch(() => null);
@@ -464,6 +478,7 @@ export class Utils
                         "listing-chapters_wrap cols-1 show-more show", // Manhwaclan
                         "mchap-list", // comix.to
                         "listing-chapters_wrap", "eplister", "chapter-list", "row-content-chapter", "chapter-li", "EpisodeListList__episode_list--_N3ks",
+                        "mt-4 space-y-2 ",
                     ];
 
                     let listChapters;
@@ -532,6 +547,15 @@ export class Utils
                         if (div.length > 0)
                         {
                             scrapInfo.Image = div[0].firstElementChild.getAttribute("src");
+                        }
+                    }
+                    else if (url.includes("hivetoons"))
+                    {
+                        const div = document.getElementsByClassName("w-full rounded-lg object-cover object-bottom sm:max-h-[400px] h-auto transition-transform duration-300 group-hover:scale-105");
+
+                        if (div.length > 0)
+                        {
+                            scrapInfo.Image = div[0].getAttribute("src");
                         }
                     }
                     else if (roiroi)
@@ -647,6 +671,24 @@ export class Utils
                             scrapInfo.Description = desc.textContent;
                         }
                     }
+                    else if (url.includes("roliascan"))
+                    {
+                        const desc = document.getElementById("description-content-tab");
+
+                        if (desc)
+                        {
+                            scrapInfo.Description = desc.textContent;
+                        }
+                    }
+                    else if (url.includes("hivetoons"))
+                    {
+                        const desc = document.getElementsByClassName("p-4 bg-white/10 rounded-lg")[0];
+
+                        if (desc)
+                        {
+                            scrapInfo.Description = desc.textContent;
+                        }
+                    }
                     else
                     {
                         const descriptionOG = document.head.querySelector("meta[property~='og:description']");
@@ -667,7 +709,11 @@ export class Utils
                     }
                     else if (url.includes("roliascan"))
                     {
-                        scrapInfo.Name = document.getElementsByClassName("post-type-header-inner")[0].children[3].textContent;
+                        scrapInfo.Name = document.getElementsByClassName("text-2xl lg:text-3xl xl:text-4xl font-bold text-neutral-100 tracking-tight mb-1")[0].textContent;
+                    }
+                    else if (url.includes("hivetoons"))
+                    {
+                        scrapInfo.Name = document.getElementsByClassName("break-words text-2xl font-bold leading-[1.5rem] text-foreground")[0].textContent;
                     }
                     else if (url.includes("flamecomics") || url.includes("radiantscans") || url.includes("arenascan"))
                     {
@@ -980,19 +1026,40 @@ export class Utils
                 list = parts[parts.length - 1].split("-");
                 list.splice(0, 1);
             }
+            else if (url.includes("roliascan"))
+            {
+                const parts = url.split("/");
+                const match = parts[parts.length - 2].match(/ch(\d+(?:\.\d+)*)/);
+
+                if (match)
+                {
+                    list = [match[1]];
+                }
+            }
             else
             {
-                list = url.split("/")[5].split("-");
+                const parts = url.split("/");
+
+                if (parts[parts.length - 1].length > 0)
+                {
+                    list = parts[parts.length - 1].split("-");
+                }
+                else
+                {
+                    list = parts[parts.length - 2].split("-");
+                }
             }
 
             let chapterNumber = "";
+
             for (let str of list)
             {
                 str = str.replace(/[a-zA-Z]/g, "");
+
                 if (str !== "")
                 {
-                    if (chapterNumber !== "")
-                        chapterNumber += ".";
+                    if (chapterNumber !== "") chapterNumber += ".";
+
                     chapterNumber += str.replace(/\D/g, ".");
                 }
             }
